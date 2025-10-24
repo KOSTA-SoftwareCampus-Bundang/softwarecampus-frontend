@@ -72,8 +72,6 @@ const CourseListPage: React.FC = () => {
   // 폼 값 변경 시 URL 업데이트
   useEffect(() => {
     const subscription = watch((formData) => {
-      isInternalUpdateRef.current = true;
-      
       const next = new URLSearchParams();
       
       if (formData.keyword?.trim()) {
@@ -86,11 +84,18 @@ const CourseListPage: React.FC = () => {
         next.set('format', reverseFormatMap[formData.format]);
       }
 
-      setSearchParams(next, { replace: true });
+      // 현재 URL 파라미터와 비교하여 변경된 경우에만 업데이트
+      const currentParamsString = searchParams.toString();
+      const nextParamsString = next.toString();
+      
+      if (currentParamsString !== nextParamsString) {
+        isInternalUpdateRef.current = true;
+        setSearchParams(next, { replace: true });
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, setSearchParams]);
+  }, [watch, setSearchParams, searchParams]);
 
   // 쿼리 필터는 URL에서 직접 파생
   const queryFilters = useMemo(

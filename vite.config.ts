@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
+  const env = loadEnv(mode, process.cwd(), 'VITE_');
   
   // 안전한 포트 파싱
   const portEnv = env.VITE_DEV_PORT;
@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => {
   const host = env.VITE_DEV_HOST ?? '127.0.0.1';
 
   return {
+    envPrefix: 'VITE_',
     server: {
       port,
       host,

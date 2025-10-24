@@ -96,6 +96,34 @@ description: 소프트웨어캠퍼스 프런트엔드 애플리케이션에서 �
 
 ---
 
+### **환경변수 정책 (Environment Variables)**
+
+**보안 원칙:**
+- 클라이언트 코드에 노출되는 환경 변수는 **반드시 `VITE_` 접두사**를 사용해야 합니다.
+- `vite.config.ts`에서 `loadEnv()` 호출 시 세 번째 인자를 `'VITE_'`로 설정하여 민감한 서버 측 환경 변수가 클라이언트에 노출되지 않도록 방지합니다.
+- Vite 설정 객체에 `envPrefix: 'VITE_'`를 명시하여 빌드 시에도 동일한 가드를 적용합니다.
+
+**환경 변수 파일:**
+- `.env.local`: 로컬 개발 환경 전용 (Git에 커밋하지 않음)
+- `.env`: 기본 환경 변수 (필요 시)
+
+**사용 예시:**
+```typescript
+// vite.config.ts
+const env = loadEnv(mode, process.cwd(), 'VITE_');
+
+export default {
+  envPrefix: 'VITE_',
+  // ... 나머지 설정
+};
+```
+
+**현재 정의된 환경 변수:**
+- `VITE_DEV_PORT`: 개발 서버 포트 (기본값: 5173)
+- `VITE_DEV_HOST`: 개발 서버 호스트 (기본값: 127.0.0.1)
+
+---
+
 ### **주요 업데이트 내역 (2025-10-25)**
 
 - **TypeScript**: 5.8.2 → 5.9.3 (최신 안정 버전)
@@ -105,6 +133,7 @@ description: 소프트웨어캠퍼스 프런트엔드 애플리케이션에서 �
 - **@types/node**: 22.14.0 → 22.11.1 (버전 정정)
 - **vite-env.d.ts 추가**: Vite 환경 변수 타입 정의
 - **tsconfig.json 개선**: strict 모드, resolveJsonModule, esModuleInterop 활성화
+- **환경변수 보안 정책 적용**: `VITE_` 접두사 강제화로 민감 정보 노출 방지
 
 ---
 
