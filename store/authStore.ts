@@ -9,6 +9,7 @@ interface User {
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (id: string, password: string) => boolean;
   logout: () => void;
 }
@@ -25,6 +26,7 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       isAuthenticated: false,
+      isLoading: false,
       login: (id: string, password: string) => {
         const account = TEMP_ACCOUNTS[id as keyof typeof TEMP_ACCOUNTS];
         

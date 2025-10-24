@@ -8,16 +8,22 @@ const CourseDetailPage: React.FC = () => {
   const params = useParams<{ courseId: string }>();
   const courseId = Number(params.courseId);
 
-  if (!params.courseId || Number.isNaN(courseId)) {
-    return <Navigate to="/lectures" replace />;
-  }
+  // 유효한 courseId인지 확인
+  const isValidCourseId = Boolean(params.courseId) && !Number.isNaN(courseId);
 
+  // 항상 훅을 호출하되, enabled 플래그로 실행 여부 제어
   const { data: course, isLoading } = useQuery({
     queryKey: ['course', courseId],
     queryFn: () => fetchCourseById(courseId),
     staleTime: 1000 * 60,
-    gcTime: 1000 * 60 * 5
+    gcTime: 1000 * 60 * 5,
+    enabled: isValidCourseId
   });
+
+  // 훅 호출 이후에 리다이렉션 처리
+  if (!isValidCourseId) {
+    return <Navigate to="/lectures" replace />;
+  }
 
   if (isLoading) {
     return (

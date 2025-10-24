@@ -23,11 +23,28 @@ export const useThemeStore = create<ThemeState>((set) => ({
   toggleTheme: () =>
     set((state) => {
       const next = state.theme === 'light' ? 'dark' : 'light';
-      window.localStorage.setItem('software-campus-theme', next);
+      
+      // SSR 환경 체크 및 안전한 localStorage 접근
+      if (typeof window !== 'undefined') {
+        try {
+          window.localStorage.setItem('software-campus-theme', next);
+        } catch (err) {
+          console.warn('Failed to save theme to localStorage:', err);
+        }
+      }
+      
       return { theme: next };
     }),
   setTheme: (theme) => {
-    window.localStorage.setItem('software-campus-theme', theme);
+    // SSR 환경 체크 및 안전한 localStorage 접근
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem('software-campus-theme', theme);
+      } catch (err) {
+        console.warn('Failed to save theme to localStorage:', err);
+      }
+    }
+    
     set({ theme });
   }
 }));

@@ -1,6 +1,7 @@
 ﻿import React from 'react';
 import { Course } from '../../types';
 import { StarIcon, CalendarIcon, DesktopIcon, UsersIcon } from '../icons/Icons';
+import { getLargeImageUrl } from '../../utils/imageUtils';
 
 interface CourseDetailPageProps {
   course: Course;
@@ -31,16 +32,16 @@ const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ course }) => {
 
             <div className="w-full aspect-video rounded-lg overflow-hidden mb-8 shadow-lg">
               <img
-                src={course.imageUrl.replace('400/250', '800/450')}
+                src={getLargeImageUrl(course.imageUrl)}
                 alt={course.title}
                 className="w-full h-full object-cover"
               />
             </div>
 
             <div className="flex flex-wrap gap-2 mb-8">
-              {course.tags.map((tag) => (
+              {course.tags.map((tag, index) => (
                 <span
-                  key={tag}
+                  key={`${tag}-${index}`}
                   className="text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full"
                 >
                   {tag}
@@ -68,8 +69,8 @@ const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ course }) => {
               <p className="leading-relaxed">{course.description}</p>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">이 과정에서 얻게 되는 것</h3>
               <ul className="list-disc list-inside space-y-2">
-                {course.highlights.map((item) => (
-                  <li key={item}>{item}</li>
+                {course.highlights.map((item, index) => (
+                  <li key={`${item}-${index}`}>{item}</li>
                 ))}
               </ul>
             </section>
@@ -80,18 +81,28 @@ const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ course }) => {
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">지금 바로 시작해 보세요</h3>
                 <div className="space-y-3">
-                  <a
-                    href="#apply"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // TODO: 수강 신청 로직 구현
+                      console.log('수강 신청:', course.title);
+                    }}
+                    aria-label="수강 신청하기"
                     className="w-full flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-opacity-90 transition"
                   >
                     수강 신청하기
-                  </a>
-                  <a
-                    href="#bookmark"
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // TODO: 찜하기 로직 구현
+                      console.log('찜하기:', course.title);
+                    }}
+                    aria-label="찜하기"
                     className="w-full flex justify-center items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-200 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                   >
                     찜하기
-                  </a>
+                  </button>
                 </div>
                 <ul className="mt-6 space-y-3 text-sm text-gray-600 dark:text-gray-300">
                   <li className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-﻿---
+---
 title: Frontend Technology Stacks
 version: 1.2.0
 last_updated: 2025-10-25 (KST)

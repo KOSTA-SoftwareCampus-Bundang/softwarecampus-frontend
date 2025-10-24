@@ -20,9 +20,10 @@ export async function fetchCourses(filter?: CourseFilter): Promise<Course[]> {
   await delay(400);
 
   return mockCourses.filter((course) => {
-    const matchKeyword = filter?.keyword
-      ? course.title.toLowerCase().includes(filter.keyword.toLowerCase()) ||
-        course.tags.some((tag) => tag.toLowerCase().includes(filter.keyword!.toLowerCase()))
+    const keyword = filter?.keyword;
+    const matchKeyword = keyword
+      ? course.title.toLowerCase().includes(keyword.toLowerCase()) ||
+        course.tags.some((tag) => tag.toLowerCase().includes(keyword.toLowerCase()))
       : true;
     const matchCategory = filter?.category && filter.category !== '전체'
       ? course.category === filter.category

@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useRef } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import CourseSection from '../components/main/CourseSection';
@@ -38,86 +38,69 @@ const reverseFormatMap: Record<CourseFormat, string> = {
 };
 
 const CourseListPage: React.FC = () => {
-  const { control, register, setValue, getValues } = useForm<CourseFilterForm>({
-    defaultValues: {
-      keyword: '',
-      category: '전체',
-      format: '전체'
-    }
-  });
-
   const [searchParams, setSearchParams] = useSearchParams();
-  const searchParamsString = searchParams.toString();
-  const filters = useWatch({ control });
-  const syncFromUrlRef = useRef(false);
-  const lastSyncedQueryRef = useRef<string | null>(null);
+  const isInternalUpdateRef = useRef(false);
 
-  useEffect(() => {
-    syncFromUrlRef.current = true;
-
-    const currentValues = getValues();
+  // URL을 단일 진실 공급원으로 사용
+  const currentFilters = useMemo(() => {
     const targetParam = searchParams.get('target');
     const formatParam = searchParams.get('format');
     const keywordParam = searchParams.get('q');
 
-    const mappedCategory = targetParam && targetMap[targetParam] ? targetMap[targetParam] : '전체';
-    const mappedFormat = formatParam && formatMap[formatParam] ? formatMap[formatParam] : '전체';
-    const mappedKeyword = keywordParam ?? '';
+    return {
+      keyword: keywordParam || '',
+      category: (targetParam && targetMap[targetParam]) || '전체',
+      format: (formatParam && formatMap[formatParam]) || '전체'
+    };
+  }, [searchParams]);
 
-    if (currentValues.category !== mappedCategory) {
-      setValue('category', mappedCategory, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
-    }
-    if (currentValues.format !== mappedFormat) {
-      setValue('format', mappedFormat, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
-    }
-    if (currentValues.keyword !== mappedKeyword) {
-      setValue('keyword', mappedKeyword, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
-    }
+  const { register, handleSubmit, reset, watch } = useForm<CourseFilterForm>({
+    defaultValues: currentFilters
+  });
 
-    lastSyncedQueryRef.current = searchParamsString;
+  // URL이 외부에서 변경되었을 때만 폼 상태를 리셋
+  useEffect(() => {
+    // 내부 업데이트로 인한 URL 변경이면 리셋하지 않음
+    if (isInternalUpdateRef.current) {
+      isInternalUpdateRef.current = false;
+      return;
+    }
+    
+    reset(currentFilters);
+  }, [currentFilters, reset]);
 
-    Promise.resolve().then(() => {
-      syncFromUrlRef.current = false;
+  // 폼 값 변경 시 URL 업데이트
+  useEffect(() => {
+    const subscription = watch((formData) => {
+      isInternalUpdateRef.current = true;
+      
+      const next = new URLSearchParams();
+      
+      if (formData.keyword?.trim()) {
+        next.set('q', formData.keyword.trim());
+      }
+      if (formData.category && formData.category !== '전체') {
+        next.set('target', reverseTargetMap[formData.category]);
+      }
+      if (formData.format && formData.format !== '전체') {
+        next.set('format', reverseFormatMap[formData.format]);
+      }
+
+      setSearchParams(next, { replace: true });
     });
-  }, [getValues, searchParams, searchParamsString, setValue]);
 
+    return () => subscription.unsubscribe();
+  }, [watch, setSearchParams]);
+
+  // 쿼리 필터는 URL에서 직접 파생
   const queryFilters = useMemo(
     () => ({
-      keyword: filters?.keyword?.trim() || undefined,
-      category: filters?.category ?? '전체',
-      format: filters?.format ?? '전체'
+      keyword: currentFilters.keyword.trim() || undefined,
+      category: currentFilters.category,
+      format: currentFilters.format
     }),
-    [filters?.keyword, filters?.category, filters?.format]
+    [currentFilters]
   );
-
-  useEffect(() => {
-    if (syncFromUrlRef.current) {
-      return;
-    }
-
-    const next = new URLSearchParams();
-    if (queryFilters.keyword) {
-      next.set('q', queryFilters.keyword);
-    }
-    if (queryFilters.category && queryFilters.category !== '전체') {
-      next.set('target', reverseTargetMap[queryFilters.category]);
-    }
-    if (queryFilters.format && queryFilters.format !== '전체') {
-      next.set('format', reverseFormatMap[queryFilters.format]);
-    }
-
-    const nextString = next.toString();
-    if (lastSyncedQueryRef.current === nextString) {
-      return;
-    }
-
-    if (nextString === '') {
-      setSearchParams(new URLSearchParams(), { replace: true });
-    } else {
-      setSearchParams(next, { replace: true });
-    }
-    lastSyncedQueryRef.current = nextString;
-  }, [queryFilters, setSearchParams]);
 
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ['courses', queryFilters],
@@ -130,7 +113,13 @@ const CourseListPage: React.FC = () => {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
       <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 md:p-8">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6">전체 강의 목록</h1>
-        <form className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form 
+          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+          onSubmit={handleSubmit((data) => {
+            // 폼 제출 시 기본 동작 방지
+            // 필터는 useWatch를 통해 실시간으로 적용되므로 별도 처리 불필요
+          })}
+        >
           <div className="md:col-span-2">
             <label htmlFor="keyword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               키워드

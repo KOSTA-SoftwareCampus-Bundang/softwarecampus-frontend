@@ -3,94 +3,13 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { MenuIcon, XIcon, SunIcon, MoonIcon, UserCircleIcon } from '../icons/Icons';
 import { useThemeStore } from '../../store/themeStore';
 import { useAuthStore } from '../../store/authStore';
-
-interface QueryParams {
-  target?: 'employee' | 'student';
-  format?: 'online' | 'offline' | 'hybrid';
-  q?: string;
-}
-
-interface RawNavNode {
-  label: string;
-  query?: QueryParams;
-  children?: RawNavNode[];
-}
+import { rawCourseNav, QueryParams, RawNavNode } from '../../constants/navigation';
 
 interface BuiltNavNode extends RawNavNode {
   path: string;
   query: QueryParams;
   children?: BuiltNavNode[];
 }
-
-const rawCourseNav: RawNavNode[] = [
-  {
-    label: '재직자 과정',
-    query: { target: 'employee' },
-    children: [
-      {
-        label: '온라인',
-        query: { format: 'online' },
-        children: [
-          { label: '데이터 엔지니어링', query: { q: '데이터 엔지니어링' } },
-          { label: '클라우드', query: { q: '클라우드' } },
-          { label: '보안', query: { q: '보안' } },
-          { label: 'AI 응용', query: { q: 'AI' } }
-        ]
-      },
-      {
-        label: '오프라인',
-        query: { format: 'offline' },
-        children: [
-          { label: '프로젝트 실습', query: { q: '프로젝트' } },
-          { label: '리더십', query: { q: '리더십' } },
-          { label: '비즈니스 전략', query: { q: '전략' } }
-        ]
-      },
-      {
-        label: '하이브리드(Blended)',
-        query: { format: 'hybrid' },
-        children: [
-          { label: 'DevOps', query: { q: 'DevOps' } },
-          { label: 'QA · 테스트', query: { q: '테스트' } },
-          { label: '애자일 코칭', query: { q: '애자일' } }
-        ]
-      }
-    ]
-  },
-  {
-    label: '취업예정자 과정',
-    query: { target: 'student' },
-    children: [
-      {
-        label: '온라인',
-        query: { format: 'online' },
-        children: [
-          { label: '코딩 테스트', query: { q: '코딩 테스트' } },
-          { label: '프론트엔드', query: { q: '프론트엔드' } },
-          { label: '백엔드', query: { q: '백엔드' } }
-        ]
-      },
-      {
-        label: '오프라인',
-        query: { format: 'offline' },
-        children: [
-          { label: '취업 캠프', query: { q: '캠프' } },
-          { label: '캡스톤 프로젝트', query: { q: '캡스톤' } },
-          { label: '포트폴리오 특강', query: { q: '포트폴리오' } }
-        ]
-      },
-      {
-        label: '하이브리드(Blended)',
-        query: { format: 'hybrid' },
-        children: [
-          { label: '면접 대비', query: { q: '면접' } },
-          { label: '커뮤니케이션', query: { q: '커뮤니케이션' } },
-          { label: '실무 프로젝트', query: { q: '실무 프로젝트' } }
-        ]
-      }
-    ]
-  }
-];
 
 const buildCourseNav = (nodes: RawNavNode[], parentQuery: QueryParams = {}): BuiltNavNode[] =>
   nodes.map((node) => {
@@ -119,9 +38,17 @@ const isQueryMatch = (current: URLSearchParams, query: QueryParams): boolean => 
   }
   return keys.every((key) => {
     const expected = query[key];
-    if (!expected) {
-      return true;
+    
+    // undefined, null, 빈 문자열은 매칭하지 않음
+    if (expected === undefined || expected === null) {
+      return false;
     }
+    
+    // 빈 문자열은 매칭하지 않음
+    if (expected === '') {
+      return false;
+    }
+    
     const actual = current.get(key);
     if (!actual) {
       return false;
@@ -155,6 +82,9 @@ const CourseMegaMenu: React.FC<CourseMegaMenuProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [hoveredSecond, setHoveredSecond] = useState<BuiltNavNode | null>(null);
+  const [shouldFlipThirdLevel, setShouldFlipThirdLevel] = useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const thirdLevelRef = React.useRef<HTMLDivElement>(null);
 
   const topActive = isLecturesPage && isQueryMatch(searchParams, top.query);
 
@@ -164,11 +94,69 @@ const CourseMegaMenu: React.FC<CourseMegaMenuProps> = ({
     }
   }, [open]);
 
+  // 3단계 메뉴가 화면 밖으로 나가는지 체크
+  useEffect(() => {
+    if (!hoveredSecond || !thirdLevelRef.current) {
+      return;
+    }
+
+    const checkOverflow = () => {
+      const rect = thirdLevelRef.current?.getBoundingClientRect();
+      if (rect) {
+        const wouldOverflow = rect.right > window.innerWidth;
+        setShouldFlipThirdLevel(wouldOverflow);
+      }
+    };
+
+    // 초기 체크
+    checkOverflow();
+
+    // 윈도우 리사이즈 시 재체크
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [hoveredSecond]);
+
   const thirdLevelItems = hoveredSecond?.children ?? [];
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setOpen((prev) => !prev);
+      if (!open) {
+        // 메뉴 열릴 때 첫 번째 항목으로 포커스 이동
+        setTimeout(() => {
+          const firstLink = menuRef.current?.querySelector('a');
+          firstLink?.focus();
+        }, 0);
+      }
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent) => {
+    // 포커스가 메뉴 밖으로 벗어나면 닫기
+    if (!menuRef.current?.contains(e.relatedTarget as Node)) {
+      setOpen(false);
+    }
+  };
+
   return (
-    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
-      <Link to={top.path} className={topLinkClasses(topActive)}>
+    <div 
+      className="relative" 
+      onMouseEnter={() => setOpen(true)} 
+      onMouseLeave={() => setOpen(false)}
+      onBlur={handleBlur}
+      ref={menuRef}
+    >
+      <Link 
+        to={top.path} 
+        className={topLinkClasses(topActive)}
+        aria-haspopup="true"
+        aria-expanded={open}
+        onKeyDown={handleKeyDown}
+        onFocus={() => setOpen(true)}
+      >
         {top.label}
       </Link>
       {top.children && top.children.length > 0 && (
@@ -180,7 +168,7 @@ const CourseMegaMenu: React.FC<CourseMegaMenuProps> = ({
         >
           <div className="relative rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
             <div className="w-60 p-4">
-              <ul className="space-y-0.5">
+              <ul className="space-y-0.5" role="menu">
                 {top.children.map((second) => {
                   const secondActive =
                     isLecturesPage && isQueryMatch(searchParams, { ...top.query, ...second.query });
@@ -189,10 +177,13 @@ const CourseMegaMenu: React.FC<CourseMegaMenuProps> = ({
                     <li
                       key={second.label}
                       onMouseEnter={() => setHoveredSecond(second)}
+                      role="none"
                     >
                       <Link
                         to={second.path}
                         className={joinClasses(subLinkClasses(secondActive), 'flex items-center justify-between')}
+                        role="menuitem"
+                        onFocus={() => setHoveredSecond(second)}
                       >
                         <span>{second.label}</span>
                         {second.children && second.children.length > 0 && (
@@ -205,14 +196,25 @@ const CourseMegaMenu: React.FC<CourseMegaMenuProps> = ({
               </ul>
             </div>
             {hoveredSecond && thirdLevelItems.length > 0 && (
-              <div className="absolute left-full top-0 ml-0 w-56 rounded-xl border border-gray-200 bg-white p-4 shadow-xl dark:border-gray-700 dark:bg-gray-900">
-                <div className="space-y-0.5">
+              <div 
+                ref={thirdLevelRef}
+                className={joinClasses(
+                  'absolute top-0 ml-0 w-56 rounded-xl border border-gray-200 bg-white p-4 shadow-xl dark:border-gray-700 dark:bg-gray-900',
+                  shouldFlipThirdLevel ? 'right-full mr-0' : 'left-full'
+                )}
+              >
+                <div className="space-y-0.5" role="menu">
                   {thirdLevelItems.map((third) => {
                     const thirdActive = isLecturesPage
                       ? isQueryMatch(searchParams, { ...top.query, ...hoveredSecond.query, ...third.query })
                       : false;
                     return (
-                      <Link key={third.label} to={third.path} className={leafLinkClasses(thirdActive)}>
+                      <Link 
+                        key={third.label} 
+                        to={third.path} 
+                        className={leafLinkClasses(thirdActive)}
+                        role="menuitem"
+                      >
                         {third.label}
                       </Link>
                     );
@@ -252,7 +254,10 @@ const Header: React.FC = () => {
     
     // 현재 페이지가 권한이 필요한 페이지인지 확인
     const currentPath = location.pathname;
-    const needsRedirect = Object.keys(protectedRoutes).some(route => currentPath.startsWith(route));
+    const needsRedirect = Object.keys(protectedRoutes).some(route => {
+      // 정확한 경로 매치 또는 하위 경로 매치
+      return currentPath === route || currentPath.startsWith(route + '/');
+    });
     
     if (needsRedirect) {
       navigate('/');
@@ -423,22 +428,32 @@ const Header: React.FC = () => {
                         const secondKey = `${top.label}::${second.label}`;
                         const isSubOpen = openMobileSubGroup === secondKey;
                         const secondActive = isLecturesPage && isQueryMatch(searchParams, { ...top.query, ...second.query });
+                        const hasChildren = second.children && second.children.length > 0;
+                        
                         return (
                           <div key={secondKey} className="space-y-0.5">
-                            <button
-                              type="button"
-                              className={mobileSecondaryButtonClasses(secondActive)}
-                              onClick={() => {
-                                setOpenMobileSubGroup(isSubOpen ? null : secondKey);
-                              }}
-                            >
-                              <span className="flex items-center justify-between">
-                                {second.label}
-                                {second.children && second.children.length > 0 && (
+                            {hasChildren ? (
+                              <button
+                                type="button"
+                                className={mobileSecondaryButtonClasses(secondActive)}
+                                onClick={() => {
+                                  setOpenMobileSubGroup(isSubOpen ? null : secondKey);
+                                }}
+                              >
+                                <span className="flex items-center justify-between">
+                                  {second.label}
                                   <span className="text-xs text-gray-400">{isSubOpen ? '−' : '+'}</span>
-                                )}
-                              </span>
-                            </button>
+                                </span>
+                              </button>
+                            ) : (
+                              <Link
+                                to={second.path}
+                                onClick={handleCloseMobileMenu}
+                                className={mobileSecondaryButtonClasses(secondActive)}
+                              >
+                                {second.label}
+                              </Link>
+                            )}
                             {isSubOpen && second.children && (
                               <div className="space-y-1 pl-3">
                                 {second.children.map((third) => {

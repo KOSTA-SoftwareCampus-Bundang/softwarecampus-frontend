@@ -6,10 +6,11 @@ const LoginPage: React.FC = () => {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -18,12 +19,20 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    const success = login(id, password);
-    
-    if (success) {
-      navigate('/');
-    } else {
-      setError('아이디 또는 비밀번호가 올바르지 않습니다.');
+    setIsLoading(true);
+    try {
+      const success = login(id, password);
+      
+      if (success) {
+        navigate('/');
+      } else {
+        setError('아이디 또는 비밀번호가 올바르지 않습니다.');
+      }
+    } catch (err) {
+      setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,9 +82,10 @@ const LoginPage: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+              disabled={isLoading}
+              className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-900"
             >
-              로그인
+              {isLoading ? '로그인 중...' : '로그인'}
             </button>
           </form>
 

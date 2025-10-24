@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Banner } from '../../types';
 import { ChevronLeftIcon, ChevronRightIcon } from '../icons/Icons';
 import Skeleton from '../ui/Skeleton';
@@ -27,7 +27,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ banners, loading }) => {
       const timer = setTimeout(goToNext, 5000);
       return () => clearTimeout(timer);
     }
-  }, [currentIndex, loading, banners, goToNext]);
+  }, [currentIndex, loading, banners.length, goToNext]);
 
   if (loading) {
     return <Skeleton className="w-full h-[300px] md:h-[500px]" />;
@@ -37,7 +37,14 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ banners, loading }) => {
     return null;
   }
 
-  const currentBanner = banners[currentIndex];
+  // 인덱스를 안전한 범위로 클램핑
+  const safeIndex = Math.max(0, Math.min(currentIndex, banners.length - 1));
+  const currentBanner = banners[safeIndex];
+
+  // 추가 안전 체크
+  if (!currentBanner) {
+    return null;
+  }
 
   return (
     <div className="relative w-full h-[300px] md:h-[500px] group overflow-hidden rounded-2xl shadow-lg">
@@ -61,7 +68,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ banners, loading }) => {
       <button
         type="button"
         onClick={goToPrevious}
-        className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300"
         aria-label="이전 배너"
       >
         <ChevronLeftIcon className="w-6 h-6" />
@@ -69,7 +76,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ banners, loading }) => {
       <button
         type="button"
         onClick={goToNext}
-        className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300"
         aria-label="다음 배너"
       >
         <ChevronRightIcon className="w-6 h-6" />

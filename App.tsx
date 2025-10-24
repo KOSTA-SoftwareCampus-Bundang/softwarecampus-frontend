@@ -6,6 +6,8 @@ import CourseListPage from './pages/CourseListPage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import AdminRoute from './components/auth/AdminRoute';
 import { useThemeStore } from './store/themeStore';
 
 const NotFound: React.FC = () => (
@@ -64,25 +66,47 @@ const App: React.FC = () => {
             />
           }
         />
-        <Route
-          path="/mypage"
-          element={
-            <PlaceholderPage
-              title="마이페이지 준비 중"
-              description="수강 이력과 즐겨찾기, 결제 내역을 확인할 수 있는 마이페이지를 개발 중입니다."
-            />
-          }
-        />
         <Route path="/login" element={<LoginPage />} />
+        
+        {/* 인증이 필요한 라우트 */}
+        <Route element={<ProtectedRoute />}>
+          <Route
+            path="/mypage"
+            element={
+              <PlaceholderPage
+                title="마이페이지 준비 중"
+                description="수강 이력과 즐겨찾기, 결제 내역을 확인할 수 있는 마이페이지를 개발 중입니다."
+              />
+            }
+          />
+        </Route>
+
+        {/* 관리자 전용 라우트 */}
+        <Route element={<AdminRoute />}>
+          <Route
+            path="/admin"
+            element={
+              <PlaceholderPage
+                title="관리자 페이지 준비 중"
+                description="관리자 전용 기능은 현재 개발 중입니다."
+              />
+            }
+          />
+        </Route>
+
+        {/* 권한 없음 페이지 */}
         <Route
-          path="/admin"
+          path="/unauthorized"
           element={
             <PlaceholderPage
-              title="관리자 페이지 준비 중"
-              description="관리자 전용 기능은 현재 개발 중입니다."
+              title="접근 권한이 없습니다"
+              description="이 페이지에 접근할 권한이 없습니다. 관리자에게 문의하세요."
+              ctaLabel="메인으로 가기"
+              ctaHref="/"
             />
           }
         />
+
         <Route
           path="/privacy"
           element={

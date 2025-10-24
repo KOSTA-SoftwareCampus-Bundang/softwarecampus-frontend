@@ -1,5 +1,4 @@
-﻿import React from 'react';
-import { Link } from 'react-router-dom';
+﻿import React from 'react';import { Link } from 'react-router-dom';
 import { Course } from '../../types';
 import CourseCard from './CourseCard';
 import { ArrowRightIcon } from '../icons/Icons';
@@ -39,7 +38,8 @@ const EmptyState: React.FC = () => (
 );
 
 const CourseSection: React.FC<CourseSectionProps> = ({ title, courses, loading, link, targetCount }) => {
-  const finalTarget = targetCount ?? courses.length;
+  // 로딩 중일 때도 스켈레톤을 표시하기 위해 기본값 설정
+  const finalTarget = targetCount ?? Math.max(courses.length, 4);
   const isEmpty = !loading && courses.length === 0;
   const placeholdersCount = Math.max(finalTarget - courses.length, 0);
 
