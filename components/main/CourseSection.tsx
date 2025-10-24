@@ -39,8 +39,7 @@ const EmptyState: React.FC = () => (
 );
 
 const CourseSection: React.FC<CourseSectionProps> = ({ title, courses, loading, link, targetCount }) => {
-  const baseTarget = courses.length > 0 ? courses.length : 4;
-  const finalTarget = targetCount ?? baseTarget;
+  const finalTarget = targetCount ?? courses.length;
   const isEmpty = !loading && courses.length === 0;
   const placeholdersCount = Math.max(finalTarget - courses.length, 0);
 
