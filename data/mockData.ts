@@ -1,4 +1,4 @@
-﻿import { Course, CommunityPost, Banner } from '../types';
+import { Course, CommunityPost, Banner } from '../types';
 
 export const mockCourses: Course[] = [
   {

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { MenuIcon, XIcon, SunIcon, MoonIcon, UserCircleIcon } from '../icons/Icons';
 import { useThemeStore } from '../../store/themeStore';

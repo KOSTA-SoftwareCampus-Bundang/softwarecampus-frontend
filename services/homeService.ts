@@ -1,4 +1,4 @@
-﻿import { Banner, CommunityPost, Course } from '../types';
+import { Banner, CommunityPost, Course } from '../types';
 import {
   mockBanners,
   mockBestCourses,

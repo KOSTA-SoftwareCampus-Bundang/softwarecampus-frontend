@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import HeroBanner from '../components/main/HeroBanner';
 import CourseSection from '../components/main/CourseSection';

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Course } from '../../types';
 import { StarIcon, CalendarIcon, DesktopIcon, UsersIcon } from '../icons/Icons';
 import { getLargeImageUrl } from '../../utils/imageUtils';

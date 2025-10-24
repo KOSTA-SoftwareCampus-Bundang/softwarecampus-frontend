@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import { Course, CourseCategory, CourseFormat } from '../types';
 import { mockCourses } from '../data/mockData';
 
