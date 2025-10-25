@@ -31,12 +31,10 @@ const CommunityWritePage = () => {
   // 게시글 작성 mutation
   const createPostMutation = useMutation({
     mutationFn: createBoardPost,
-    onSuccess: async (newPost) => {
-      console.log('게시글 작성 성공:', newPost);
-      // 캐시 무효화가 완료될 때까지 대기
-      await queryClient.invalidateQueries({ queryKey: ['boardPosts'] });
+    onSuccess: (newPost) => {
+      // 캐시 무효화는 백그라운드에서 실행
+      queryClient.invalidateQueries({ queryKey: ['boardPosts'] });
       alert('게시글이 작성되었습니다.');
-      console.log('페이지 이동:', `/community/${newPost.id}`);
       navigate(`/community/${newPost.id}`);
     },
     onError: (error: any) => {

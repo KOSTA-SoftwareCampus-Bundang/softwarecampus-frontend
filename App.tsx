@@ -4,6 +4,8 @@ import Layout from './components/layout/Layout';
 import HomePage from './pages/HomePage';
 import CourseListPage from './pages/CourseListPage';
 import CourseDetailPage from './pages/CourseDetailPage';
+import AcademyListPage from './pages/AcademyListPage';
+import AcademyDetailPage from './pages/AcademyDetailPage';
 import CommunityPage from './pages/CommunityPage';
 import CommunityDetailPage from './pages/CommunityDetailPage';
 import CommunityWritePage from './pages/CommunityWritePage';
@@ -41,6 +43,10 @@ const App: React.FC = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/lectures" element={<CourseListPage />} />
         <Route path="/lectures/:courseId" element={<CourseDetailPage />} />
+        
+        {/* 기관 목록 라우트 */}
+        <Route path="/academies" element={<AcademyListPage />} />
+        <Route path="/academies/:academyId" element={<AcademyDetailPage />} />
         
         {/* 커뮤니티 라우트 */}
         <Route path="/community" element={<CommunityPage />} />

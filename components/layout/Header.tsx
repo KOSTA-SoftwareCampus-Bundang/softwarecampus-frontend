@@ -412,6 +412,9 @@ const Header: React.FC = () => {
                   leafLinkClasses={leafLinkClasses}
                 />
               ))}
+              <NavLink to="/academies" className={({ isActive }) => topLinkClasses(isActive)}>
+                훈련기관
+              </NavLink>
               <CommunityDropdown
                 searchParams={searchParams}
                 topLinkClasses={topLinkClasses}
@@ -562,6 +565,13 @@ const Header: React.FC = () => {
                 </div>
               );
             })}
+            <NavLink
+              to="/academies"
+              onClick={handleCloseMobileMenu}
+              className={({ isActive }) => mobileNavLinkClasses(isActive)}
+            >
+              훈련기관
+            </NavLink>
             <NavLink
               to="/community"
               onClick={handleCloseMobileMenu}
