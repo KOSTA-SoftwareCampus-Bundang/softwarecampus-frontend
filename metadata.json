@@ -1,0 +1,5 @@
+{
+  "name": "Software Campus",
+  "description": "A modern, responsive web application for an online learning platform, featuring course listings, reviews, a community forum, and user profiles. Built with React, TypeScript, and Tailwind CSS.",
+  "requestFramePermissions": []
+}
