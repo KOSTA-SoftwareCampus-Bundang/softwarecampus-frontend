@@ -29,6 +29,31 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, '.')
       }
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // React 코어 라이브러리
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            // TanStack Query
+            'react-query': ['@tanstack/react-query'],
+            // Tiptap 에디터 (가장 큰 라이브러리)
+            'tiptap': [
+              '@tiptap/react',
+              '@tiptap/starter-kit',
+              '@tiptap/extension-placeholder',
+              '@tiptap/extension-link',
+              '@tiptap/extension-image'
+            ],
+            // 상태 관리
+            'state': ['zustand'],
+            // HTTP 클라이언트
+            'http': ['axios']
+          }
+        }
+      },
+      chunkSizeWarningLimit: 600
     }
   };
 });

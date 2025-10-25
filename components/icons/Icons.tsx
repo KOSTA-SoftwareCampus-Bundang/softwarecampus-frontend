@@ -185,3 +185,130 @@ export const UsersIcon: React.FC<IconProps> = ({ className, ariaLabel = '사용�
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.124-1.282-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.124-1.282.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
   </svg>
 );
+
+export const Eye: React.FC<IconProps> = ({ className, ariaLabel = '조회수' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  </svg>
+);
+
+export const MessageSquare: React.FC<IconProps> = ({ className, ariaLabel = '댓글' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" />
+  </svg>
+);
+
+export const ThumbsUp: React.FC<IconProps> = ({ className, ariaLabel = '추천' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+  </svg>
+);
+
+export const Paperclip: React.FC<IconProps> = ({ className, ariaLabel = '첨부파일' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+  </svg>
+);
+
+export const Send: React.FC<IconProps> = ({ className, ariaLabel = '전송' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+  </svg>
+);
+
+export const Pencil: React.FC<IconProps> = ({ className, ariaLabel = '편집' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+  </svg>
+);
+
+export const Trash: React.FC<IconProps> = ({ className, ariaLabel = '삭제' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+);
+
+export const ChevronDown: React.FC<IconProps> = ({ className, ariaLabel = '펼치기' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+  </svg>
+);
+
+export const ChevronUp: React.FC<IconProps> = ({ className, ariaLabel = '접기' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+  </svg>
+);

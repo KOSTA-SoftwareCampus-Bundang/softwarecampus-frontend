@@ -78,6 +78,26 @@ description: 소프트웨어캠퍼스 프런트엔드 애플리케이션에서 �
 
 ---
 
+### **리치 텍스트 에디터 (Rich Text Editor)**
+
+| 구분 | 사용 기술 | 버전 | 라이선스 | 추가/수정일 |
+|---|---|---|---|---|
+| 에디터 코어 | @tiptap/react | 2.x | MIT | (2025-10-25 추가) |
+| 기본 확장 | @tiptap/starter-kit | 2.x | MIT | (2025-10-25 추가) |
+| Placeholder 확장 | @tiptap/extension-placeholder | 2.x | MIT | (2025-10-25 추가) |
+| Link 확장 | @tiptap/extension-link | 2.x | MIT | (2025-10-25 추가) |
+| Image 확장 | @tiptap/extension-image | 2.x | MIT | (2025-10-25 추가) |
+
+**채택 이유:** 커뮤니티 게시판 글쓰기/수정 기능에 사용. 경량화되고 확장 가능한 구조로 다양한 에디터 기능을 모듈식으로 구성 가능.
+
+**사용 확장 기능:**
+- StarterKit: Bold, Italic, Strike, Heading, Lists, Code, CodeBlock, Blockquote, HorizontalRule 등 기본 기능 제공
+- Placeholder: 빈 에디터에 안내 문구 표시
+- Link: URL 링크 삽입 및 관리
+- Image: 이미지 삽입 (URL 기반)
+
+---
+
 ### **타입 정의 (Type Definitions)**
 
 | 구분 | 사용 기술 | 버전 | 라이선스 | 추가/수정일 |

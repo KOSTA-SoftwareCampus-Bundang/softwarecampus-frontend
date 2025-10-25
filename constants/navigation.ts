@@ -6,15 +6,49 @@ export interface QueryParams {
   target?: 'employee' | 'student';
   format?: 'online' | 'offline' | 'hybrid';
   q?: string;
+  category?: string;
 }
 
 export interface RawNavNode {
   label: string;
   query?: QueryParams;
   children?: RawNavNode[];
+  path?: string; // 커뮤니티용 직접 경로
 }
 
 export const rawCourseNav: RawNavNode[] = [
+  {
+    label: '채용예정자 과정',
+    query: { target: 'student' },
+    children: [
+      {
+        label: '온라인',
+        query: { format: 'online' },
+        children: [
+          { label: '웹개발', query: { q: '웹개발' } },
+          { label: '모바일', query: { q: '모바일' } },
+          { label: '데이터/AI', query: { q: '데이터 AI' } },
+          { label: '클라우드', query: { q: '클라우드' } },
+          { label: '보안', query: { q: '보안' } },
+          { label: 'IoT/임베디드', query: { q: 'IoT 임베디드' } },
+          { label: '게임/블록체인', query: { q: '게임 블록체인' } },
+        ]
+      },
+      {
+        label: '오프라인',
+        query: { format: 'offline' },
+        children: [
+          { label: '웹개발', query: { q: '웹개발' } },
+          { label: '모바일', query: { q: '모바일' } },
+          { label: '데이터/AI', query: { q: '데이터 AI' } },
+          { label: '클라우드', query: { q: '클라우드' } },
+          { label: '보안', query: { q: '보안' } },
+          { label: 'IoT/임베디드', query: { q: 'IoT 임베디드' } },
+          { label: '게임/블록체인', query: { q: '게임 블록체인' } },
+        ]
+      }
+    ]
+  },
   {
     label: '재직자 과정',
     query: { target: 'employee' },
@@ -23,63 +57,62 @@ export const rawCourseNav: RawNavNode[] = [
         label: '온라인',
         query: { format: 'online' },
         children: [
-          { label: '데이터 엔지니어링', query: { q: '데이터 엔지니어링' } },
-          { label: '클라우드', query: { q: '클라우드' } },
-          { label: '보안', query: { q: '보안' } },
-          { label: 'AI 응용', query: { q: 'AI' } }
+          { label: 'Infra 운영', query: { q: 'Infra 운영' } },
+          { label: 'Back-End 개발', query: { q: 'Back-End 개발' } },
+          { label: 'Front-End 개발', query: { q: 'Front-End 개발' } },
+          { label: 'DB', query: { q: 'DB' } },
+          { label: 'AI', query: { q: 'AI' } },
+          { label: 'SW요구분석', query: { q: 'SW요구분석' } },
+          { label: '백엔드개발자', query: { q: '백엔드개발자' } },
+          { label: 'Cloud엔지니어', query: { q: 'Cloud엔지니어' } },
+          { label: '프론트엔드개발자', query: { q: '프론트엔드개발자' } },
+          { label: '데이터엔지니어', query: { q: '데이터엔지니어' } },
+          { label: 'AI엔지니어', query: { q: 'AI엔지니어' } },
+          { label: 'SW아키텍트', query: { q: 'SW아키텍트' } },
+          { label: '정보보안전문가', query: { q: '정보보안전문가' } },
+          { label: 'IT기획자/컨설턴트', query: { q: 'IT기획자 컨설턴트' } },
+          { label: '데이터분석가', query: { q: '데이터분석가' } },
+          { label: '비즈니스분석가', query: { q: '비즈니스분석가' } },
+          { label: '데이터사이언티스트', query: { q: '데이터사이언티스트' } },
         ]
       },
       {
         label: '오프라인',
         query: { format: 'offline' },
         children: [
-          { label: '프로젝트 실습', query: { q: '프로젝트' } },
-          { label: '리더십', query: { q: '리더십' } },
-          { label: '비즈니스 전략', query: { q: '전략' } }
-        ]
-      },
-      {
-        label: '하이브리드(Blended)',
-        query: { format: 'hybrid' },
-        children: [
-          { label: 'DevOps', query: { q: 'DevOps' } },
-          { label: 'QA · 테스트', query: { q: '테스트' } },
-          { label: '애자일 코칭', query: { q: '애자일' } }
-        ]
-      }
-    ]
-  },
-  {
-    label: '취업예정자 과정',
-    query: { target: 'student' },
-    children: [
-      {
-        label: '온라인',
-        query: { format: 'online' },
-        children: [
-          { label: '코딩 테스트', query: { q: '코딩 테스트' } },
-          { label: '프론트엔드', query: { q: '프론트엔드' } },
-          { label: '백엔드', query: { q: '백엔드' } }
-        ]
-      },
-      {
-        label: '오프라인',
-        query: { format: 'offline' },
-        children: [
-          { label: '취업 캠프', query: { q: '캠프' } },
-          { label: '캡스톤 프로젝트', query: { q: '캡스톤' } },
-          { label: '포트폴리오 특강', query: { q: '포트폴리오' } }
-        ]
-      },
-      {
-        label: '하이브리드(Blended)',
-        query: { format: 'hybrid' },
-        children: [
-          { label: '면접 대비', query: { q: '면접' } },
-          { label: '커뮤니케이션', query: { q: '커뮤니케이션' } },
-          { label: '실무 프로젝트', query: { q: '실무 프로젝트' } }
+          { label: 'Infra 운영', query: { q: 'Infra 운영' } },
+          { label: 'Back-End 개발', query: { q: 'Back-End 개발' } },
+          { label: 'Front-End 개발', query: { q: 'Front-End 개발' } },
+          { label: 'DB', query: { q: 'DB' } },
+          { label: 'AI', query: { q: 'AI' } },
+          { label: 'SW요구분석', query: { q: 'SW요구분석' } },
+          { label: '백엔드개발자', query: { q: '백엔드개발자' } },
+          { label: 'Cloud엔지니어', query: { q: 'Cloud엔지니어' } },
+          { label: '프론트엔드개발자', query: { q: '프론트엔드개발자' } },
+          { label: '데이터엔지니어', query: { q: '데이터엔지니어' } },
+          { label: 'AI엔지니어', query: { q: 'AI엔지니어' } },
+          { label: 'SW아키텍트', query: { q: 'SW아키텍트' } },
+          { label: '정보보안전문가', query: { q: '정보보안전문가' } },
+          { label: 'IT기획자/컨설턴트', query: { q: 'IT기획자 컨설턴트' } },
+          { label: '데이터분석가', query: { q: '데이터분석가' } },
+          { label: '비즈니스분석가', query: { q: '비즈니스분석가' } },
+          { label: '데이터사이언티스트', query: { q: '데이터사이언티스트' } },
         ]
       }
     ]
   }
 ];
+
+/**
+ * 커뮤니티 네비게이션 구조
+ * path는 부모의 '/community'와 각 자식의 query를 조합하여 동적 생성
+ */
+export const rawCommunityNav: RawNavNode = {
+  label: '커뮤니티',
+  path: '/community',
+  children: [
+    { label: '공지사항', query: { category: '공지사항' } },
+    { label: '진로이야기', query: { category: '진로이야기' } },
+    { label: '코딩이야기', query: { category: '코딩이야기' } },
+  ]
+};

@@ -1,15 +1,33 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { MenuIcon, XIcon, SunIcon, MoonIcon, UserCircleIcon } from '../icons/Icons';
+import { MenuIcon, XIcon, SunIcon, MoonIcon, UserCircleIcon, ChevronDown, ChevronUp } from '../icons/Icons';
 import { useThemeStore } from '../../store/themeStore';
 import { useAuthStore } from '../../store/authStore';
-import { rawCourseNav, QueryParams, RawNavNode } from '../../constants/navigation';
+import { rawCourseNav, rawCommunityNav, QueryParams, RawNavNode } from '../../constants/navigation';
 
 interface BuiltNavNode extends RawNavNode {
   path: string;
   query: QueryParams;
   children?: BuiltNavNode[];
 }
+
+/**
+ * 기본 path와 query 객체를 조합하여 최종 URL 생성
+ */
+const buildPath = (basePath: string, query?: QueryParams): string => {
+  if (!query || Object.keys(query).length === 0) {
+    return basePath;
+  }
+  
+  const params = new URLSearchParams();
+  if (query.category) params.set('category', query.category);
+  if (query.target) params.set('target', query.target);
+  if (query.format) params.set('format', query.format);
+  if (query.q) params.set('q', query.q);
+  
+  const queryString = params.toString();
+  return queryString ? `${basePath}?${queryString}` : basePath;
+};
 
 const buildCourseNav = (nodes: RawNavNode[], parentQuery: QueryParams = {}): BuiltNavNode[] =>
   nodes.map((node) => {
@@ -229,6 +247,67 @@ const CourseMegaMenu: React.FC<CourseMegaMenuProps> = ({
   );
 };
 
+/**
+ * 커뮤니티 드롭다운 메뉴 컴포넌트
+ */
+interface CommunityDropdownProps {
+  searchParams: URLSearchParams;
+  topLinkClasses: (active: boolean) => string;
+  leafLinkClasses: (active: boolean) => string;
+}
+
+const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
+  searchParams,
+  topLinkClasses,
+  leafLinkClasses
+}) => {
+  const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const isCommunityPage = location.pathname.startsWith('/community');
+  const currentCategory = searchParams.get('category');
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <NavLink
+        to="/community"
+        className={({ isActive }) => topLinkClasses(isActive)}
+      >
+        커뮤니티
+      </NavLink>
+
+      {open && (
+        <div className="absolute left-0 top-full pt-2 z-50">
+          <div className="w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2">
+            {rawCommunityNav.children?.map((item) => {
+              const isActive = isCommunityPage && (
+                (!item.query?.category && !currentCategory) ||
+                (item.query?.category === currentCategory)
+              );
+              
+              // 부모의 path와 자식의 query를 조합하여 최종 URL 생성
+              const itemPath = buildPath(rawCommunityNav.path || '/community', item.query);
+              
+              return (
+                <Link
+                  key={item.label}
+                  to={itemPath}
+                  className={leafLinkClasses(isActive)}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openMobileGroup, setOpenMobileGroup] = useState<string | null>(null);
@@ -333,9 +412,11 @@ const Header: React.FC = () => {
                   leafLinkClasses={leafLinkClasses}
                 />
               ))}
-              <NavLink to="/community" className={({ isActive }) => topLinkClasses(isActive)}>
-                커뮤니티
-              </NavLink>
+              <CommunityDropdown
+                searchParams={searchParams}
+                topLinkClasses={topLinkClasses}
+                leafLinkClasses={leafLinkClasses}
+              />
               {isAuthenticated && (
                 <NavLink to="/mypage" className={({ isActive }) => topLinkClasses(isActive)}>
                   마이페이지
@@ -420,7 +501,7 @@ const Header: React.FC = () => {
                     className={mobileTopButtonClasses(topActive)}
                   >
                     {top.label}
-                    <span className="text-lg">{isOpen ? '−' : '+'}</span>
+                    {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                   </button>
                   {isOpen && (
                     <div className="space-y-3 bg-white px-3 py-3 dark:bg-gray-900">
@@ -442,7 +523,7 @@ const Header: React.FC = () => {
                               >
                                 <span className="flex items-center justify-between">
                                   {second.label}
-                                  <span className="text-xs text-gray-400">{isSubOpen ? '−' : '+'}</span>
+                                  {isSubOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
                                 </span>
                               </button>
                             ) : (

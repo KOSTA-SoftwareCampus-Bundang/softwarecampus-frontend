@@ -4,6 +4,10 @@ import Layout from './components/layout/Layout';
 import HomePage from './pages/HomePage';
 import CourseListPage from './pages/CourseListPage';
 import CourseDetailPage from './pages/CourseDetailPage';
+import CommunityPage from './pages/CommunityPage';
+import CommunityDetailPage from './pages/CommunityDetailPage';
+import CommunityWritePage from './pages/CommunityWritePage';
+import CommunityEditPage from './pages/CommunityEditPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -37,26 +41,13 @@ const App: React.FC = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/lectures" element={<CourseListPage />} />
         <Route path="/lectures/:courseId" element={<CourseDetailPage />} />
-        <Route
-          path="/community"
-          element={
-            <PlaceholderPage
-              title="커뮤니티 준비 중"
-              description="커뮤니티 기능은 현재 개편 중입니다. 곧 다양한 후기와 노하우를 공유하실 수 있도록 준비하겠습니다."
-            />
-          }
-        />
-        <Route
-          path="/community/:postId"
-          element={
-            <PlaceholderPage
-              title="게시글 준비 중"
-              description="커뮤니티 게시글 상세 페이지는 곧 업데이트될 예정입니다."
-              ctaLabel="커뮤니티로 돌아가기"
-              ctaHref="/community"
-            />
-          }
-        />
+        
+        {/* 커뮤니티 라우트 */}
+        <Route path="/community" element={<CommunityPage />} />
+        <Route path="/community/:postId" element={<CommunityDetailPage />} />
+        <Route path="/community/write" element={<CommunityWritePage />} />
+        <Route path="/community/edit/:postId" element={<CommunityEditPage />} />
+        
         <Route
           path="/partners"
           element={

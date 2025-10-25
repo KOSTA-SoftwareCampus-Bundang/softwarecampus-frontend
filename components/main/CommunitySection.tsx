@@ -27,6 +27,8 @@ const boardColors: Record<string, string> = {
 };
 
 const CommunitySection: React.FC<CommunitySectionProps> = ({ posts, loading }) => {
+  const isEmpty = !loading && posts.length === 0;
+
   return (
     <section>
       <div className="flex justify-between items-center mb-6">
@@ -36,29 +38,36 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({ posts, loading }) =
           <ArrowRightIcon className="w-4 h-4" />
         </Link>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {loading
-          ? Array.from({ length: 3 }).map((_, index) => <PostCardSkeleton key={`skeleton-${index}`} />)
-          : posts.map((post) => (
-              <Link
-                to={`/community/${post.id}`}
-                key={post.id}
-                className="block p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow transform hover:-translate-y-1"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${boardColors[post.board] ?? ''}`}>
-                    {post.board}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{post.createdAt}</span>
-                </div>
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200 truncate">{post.title}</h3>
-                <div className="flex justify-between items-center mt-3 text-sm text-gray-500 dark:text-gray-400">
-                  <span>{post.author}</span>
-                  <span>추천 {post.recommendations}</span>
-                </div>
-              </Link>
-            ))}
-      </div>
+      
+      {isEmpty ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-10 text-center">
+          <p className="text-sm text-gray-600 dark:text-gray-400">등록된 게시글이 없습니다.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {loading
+            ? Array.from({ length: 3 }).map((_, index) => <PostCardSkeleton key={`skeleton-${index}`} />)
+            : posts.map((post) => (
+                <Link
+                  to={`/community/${post.id}`}
+                  key={post.id}
+                  className="block p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow transform hover:-translate-y-1"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${boardColors[post.board] ?? ''}`}>
+                      {post.board}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{post.createdAt}</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 truncate">{post.title}</h3>
+                  <div className="flex justify-between items-center mt-3 text-sm text-gray-500 dark:text-gray-400">
+                    <span>{post.author}</span>
+                    <span>추천 {post.recommendations}</span>
+                  </div>
+                </Link>
+              ))}
+        </div>
+      )}
     </section>
   );
 };
