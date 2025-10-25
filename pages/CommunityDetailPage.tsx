@@ -20,25 +20,8 @@ import '../styles/tiptap.css';
  */
 const CommunityDetailPage = () => {
   const { postId } = useParams<{ postId?: string }>();
-  
-  // postId 유효성 검사 - 모든 훅보다 먼저 실행
-  if (!postId || isNaN(Number(postId))) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 dark:text-red-400 mb-4">유효하지 않은 게시글 ID입니다.</p>
-          <Link
-            to="/community"
-            className="inline-block px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            목록으로 돌아가기
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const postIdNumber = parseInt(postId, 10);
+  const postIdNumber = Number(postId);
+  const isValidPostId = Number.isInteger(postIdNumber) && !Number.isNaN(postIdNumber);
   
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -52,14 +35,14 @@ const CommunityDetailPage = () => {
   const { data: post, isLoading: postLoading } = useQuery({
     queryKey: ['boardPost', postIdNumber, user?.id],
     queryFn: () => fetchBoardPost(postIdNumber, user?.id),
-    enabled: true,
+    enabled: isValidPostId,
   });
 
   // 댓글 조회
   const { data: comments = [], isLoading: commentsLoading } = useQuery({
     queryKey: ['comments', postIdNumber],
     queryFn: () => fetchComments(postIdNumber),
-    enabled: true,
+    enabled: isValidPostId,
   });
 
   // 추천 mutation
@@ -118,6 +101,23 @@ const CommunityDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ['boardPost', postIdNumber] });
     },
   });
+
+  // 훅 선언 이후에 조기 반환
+  if (!isValidPostId) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 dark:text-red-400 mb-4">유효하지 않은 게시글 ID입니다.</p>
+          <Link
+            to="/community"
+            className="inline-block px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            목록으로 돌아가기
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // 댓글 작성 핸들러
   const handleCommentSubmit = (e: React.FormEvent) => {

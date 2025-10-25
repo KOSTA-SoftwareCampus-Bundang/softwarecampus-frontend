@@ -12,7 +12,7 @@ import Underline from '@tiptap/extension-underline';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import type { Editor } from '@tiptap/react';
-import '../../styles/tiptap.css';
+import '@/styles/tiptap.css';
 
 /**
  * Tiptap 에디터용 툴바 컴포넌트
