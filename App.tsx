@@ -6,12 +6,14 @@ import CourseListPage from './pages/CourseListPage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import AcademyListPage from './pages/AcademyListPage';
 import AcademyDetailPage from './pages/AcademyDetailPage';
+import AcademyCreatePage from './pages/AcademyCreatePage';
 import CommunityPage from './pages/CommunityPage';
 import CommunityDetailPage from './pages/CommunityDetailPage';
 import CommunityWritePage from './pages/CommunityWritePage';
 import CommunityEditPage from './pages/CommunityEditPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
 import { useThemeStore } from './store/themeStore';
@@ -47,6 +49,7 @@ const App: React.FC = () => {
         {/* 기관 목록 라우트 */}
         <Route path="/academies" element={<AcademyListPage />} />
         <Route path="/academies/:academyId" element={<AcademyDetailPage />} />
+        <Route path="/academy/create" element={<AcademyCreatePage />} />
         
         {/* 커뮤니티 라우트 */}
         <Route path="/community" element={<CommunityPage />} />
@@ -64,6 +67,7 @@ const App: React.FC = () => {
           }
         />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         
         {/* 인증이 필요한 라우트 */}
         <Route element={<ProtectedRoute />}>
