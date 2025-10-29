@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 const LoginPage: React.FC = () => {
@@ -88,6 +88,16 @@ const LoginPage: React.FC = () => {
               {isLoading ? '로그인 중...' : '로그인'}
             </button>
           </form>
+
+          {/* 회원가입 링크 */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              아직 계정이 없으신가요?{' '}
+              <Link to="/signup" className="text-primary font-semibold hover:underline">
+                회원가입하기
+              </Link>
+            </p>
+          </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
             <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">

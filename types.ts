@@ -106,3 +106,28 @@ export interface AcademyQnA {
   updatedAt: string;
   answeredAt?: string;
 }
+
+// 회원가입 관련 타입 정의
+export type UserRole = 'USER' | 'ACADEMY' | 'ADMIN';
+
+export interface SignupFormData {
+  userName: string;
+  password: string;
+  passwordConfirm: string;
+  email: string;
+  phoneNumber: string;
+  role: UserRole;
+  company?: string;
+  department?: string;
+  academyId?: number; // 기관회원일 경우 선택한 기관 ID
+}
+
+export interface AcademyCreateFormData {
+  name: string;
+  description: string;
+  address: string;
+  phone: string;
+  email: string;
+  website: string;
+  businessNumber: string; // 사업자등록번호
+}
