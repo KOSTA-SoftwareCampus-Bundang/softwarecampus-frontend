@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import {
@@ -21,7 +21,7 @@ import {
   MessageSquareIcon,
   BookmarkIcon,
   EditIcon,
-  CameraIcon,
+  UploadIcon,
 } from '../components/icons/Icons';
 
 type TabType = 'profile' | 'posts' | 'comments' | 'bookmarks';
@@ -33,10 +33,12 @@ type TabType = 'profile' | 'posts' | 'comments' | 'bookmarks';
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   
   // 데이터 상태
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -85,12 +87,72 @@ const MyPage: React.FC = () => {
   // 프로필 수정 핸들러
   const handleProfileUpdate = async (data: Partial<UserProfile>) => {
     try {
-      const updated = await updateUserProfile(data);
+      const userId = user?.id ? Number(user.id) : undefined;
+      const updated = await updateUserProfile(userId, data);
       setUserProfile(updated);
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to update profile:', error);
     }
+  };
+
+  // 프로필 이미지 업로드 핸들러
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 이미지 파일 검증
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드 가능합니다.');
+      return;
+    }
+
+    // 파일 크기 검증 (5MB 제한)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert('파일 크기는 5MB 이하여야 합니다.');
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    try {
+      // 이미지 미리보기용 Data URL 생성
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const imageUrl = e.target?.result as string;
+        
+        // TODO: 실제 API 호출로 이미지 업로드
+        // const formData = new FormData();
+        // formData.append('profileImage', file);
+        // const response = await uploadProfileImage(formData);
+        
+        // 임시로 로컬 미리보기 URL을 프로필에 반영
+        const userId = user?.id ? Number(user.id) : undefined;
+        const updated = await updateUserProfile(userId, { profileImage: imageUrl });
+        setUserProfile(updated);
+      };
+
+      reader.onerror = () => {
+        alert('이미지를 읽는 중 오류가 발생했습니다.');
+      };
+
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Failed to upload profile image:', error);
+      alert('프로필 이미지 업로드에 실패했습니다.');
+    } finally {
+      setIsUploadingImage(false);
+      // 같은 파일을 다시 선택할 수 있도록 input 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // 프로필 이미지 업로드 버튼 클릭 핸들러
+  const handleUploadButtonClick = () => {
+    fileInputRef.current?.click();
   };
 
   // 탭별 컨텐츠 렌더링
@@ -130,9 +192,28 @@ const MyPage: React.FC = () => {
                 className="w-24 h-24 rounded-full object-cover"
               />
               {activeTab === 'profile' && isEditing && (
-                <button className="absolute bottom-0 right-0 bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600">
-                  <CameraIcon className="w-4 h-4" />
-                </button>
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    aria-label="프로필 이미지 업로드"
+                  />
+                  <button
+                    onClick={handleUploadButtonClick}
+                    disabled={isUploadingImage}
+                    className="absolute bottom-0 right-0 bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                    aria-label="프로필 이미지 변경"
+                  >
+                    {isUploadingImage ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <UploadIcon className="w-4 h-4" />
+                    )}
+                  </button>
+                </>
               )}
             </div>
             <div className="flex-1">
