@@ -131,3 +131,51 @@ export interface AcademyCreateFormData {
   website: string;
   businessNumber: string; // 사업자등록번호
 }
+
+// 마이페이지 관련 타입 정의
+export interface UserProfile {
+  id: number;
+  userName: string;
+  email: string;
+  phoneNumber: string;
+  role: UserRole;
+  company?: string;
+  department?: string;
+  profileImage?: string;
+  createdAt: string;
+  academyInfo?: {
+    id: number;
+    name: string;
+    isVerified: boolean;
+  };
+}
+
+export interface MyPost {
+  id: number;
+  title: string;
+  category: CommunityCategory;
+  viewCount: number;
+  recommendCount: number;
+  commentCount: number;
+  createdAt: string;
+}
+
+export interface MyComment {
+  id: number;
+  postId: number;
+  postTitle: string;
+  content: string;
+  category: CommunityCategory;
+  createdAt: string;
+}
+
+export interface BookmarkedCourse {
+  id: number;
+  courseId: number;
+  courseTitle: string;
+  institution: string;
+  rating: number;
+  reviewCount: number;
+  imageUrl: string;
+  bookmarkedAt: string;
+}
