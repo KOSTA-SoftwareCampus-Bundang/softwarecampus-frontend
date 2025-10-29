@@ -13,7 +13,7 @@
      - 일반회원 필드: company, department (선택)
      - 기관회원 필드: academyId (필수)
    - `AcademyCreateFormData`: 기관 등록 폼 데이터 인터페이스
-     - name, description, address, phone, email, website, fields
+     - name, description, address, phone, email, website, businessNumber
 
 2. **아이콘 추가** (`Icons.tsx`)
    - `Search`: 검색
