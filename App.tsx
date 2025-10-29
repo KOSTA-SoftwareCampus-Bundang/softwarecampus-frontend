@@ -14,6 +14,7 @@ import CommunityEditPage from './pages/CommunityEditPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import MyPage from './pages/MyPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
 import { useThemeStore } from './store/themeStore';
@@ -71,15 +72,7 @@ const App: React.FC = () => {
         
         {/* 인증이 필요한 라우트 */}
         <Route element={<ProtectedRoute />}>
-          <Route
-            path="/mypage"
-            element={
-              <PlaceholderPage
-                title="마이페이지 준비 중"
-                description="수강 이력과 즐겨찾기, 결제 내역을 확인할 수 있는 마이페이지를 개발 중입니다."
-              />
-            }
-          />
+          <Route path="/mypage" element={<MyPage />} />
         </Route>
 
         {/* 관리자 전용 라우트 */}
