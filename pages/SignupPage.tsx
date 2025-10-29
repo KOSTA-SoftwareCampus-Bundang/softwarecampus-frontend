@@ -4,6 +4,11 @@ import { SignupFormData, UserRole, Academy } from '../types';
 import AcademySelectModal from '../components/auth/AcademySelectModal';
 import { Eye, EyeOff, AlertCircle, CheckCircle, Building2 } from '../components/icons/Icons';
 
+// 정규식 상수
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_REGEX = /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/;
+const PHONE_DIGITS_REGEX = /[^0-9]/g;
+
 // URL 안전성 검증 헬퍼 함수
 const isSafeImageUrl = (url: string): boolean => {
   try {
@@ -52,7 +57,7 @@ const SignupPage: React.FC = () => {
 
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    const value = inputValue.replace(/[^0-9]/g, ''); // 숫자만 추출
+    const value = inputValue.replace(PHONE_DIGITS_REGEX, ''); // 숫자만 추출
     
     let formattedValue = value;
 
@@ -95,7 +100,7 @@ const SignupPage: React.FC = () => {
       newErrors.password = '비밀번호를 입력해주세요';
     } else if (formData.password.length < 8) {
       newErrors.password = '비밀번호는 8자 이상이어야 합니다';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(formData.password)) {
+    } else if (!PASSWORD_REGEX.test(formData.password)) {
       newErrors.password = '비밀번호는 대소문자, 숫자, 특수문자(@$!%*?&)를 포함해야 합니다';
     }
 
@@ -105,10 +110,9 @@ const SignupPage: React.FC = () => {
     }
 
     // 이메일 검증
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email) {
       newErrors.email = '이메일을 입력해주세요';
-    } else if (!emailRegex.test(formData.email)) {
+    } else if (!EMAIL_REGEX.test(formData.email)) {
       newErrors.email = '올바른 이메일 형식이 아닙니다';
     }
 
@@ -123,7 +127,7 @@ const SignupPage: React.FC = () => {
     }
 
     // 기관회원인 경우 기관 선택 필수
-    if (activeTab === 'ACADEMY' && !selectedAcademy) {
+    if (formData.role === 'ACADEMY' && !selectedAcademy) {
       newErrors.academyId = '소속 기관을 선택해주세요';
     }
 
