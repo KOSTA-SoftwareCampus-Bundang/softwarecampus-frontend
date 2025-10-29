@@ -41,7 +41,16 @@ const SignupPage: React.FC = () => {
 
   const handleTabChange = (tab: 'USER' | 'ACADEMY') => {
     setActiveTab(tab);
-    setFormData((prev) => ({ ...prev, role: tab }));
+    setFormData({
+      userName: '',
+      password: '',
+      passwordConfirm: '',
+      email: '',
+      phoneNumber: '',
+      role: tab,
+      company: '',
+      department: '',
+    });
     setSelectedAcademy(null);
     setErrors({});
   };
