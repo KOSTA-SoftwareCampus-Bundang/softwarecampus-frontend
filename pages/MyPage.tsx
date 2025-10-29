@@ -116,10 +116,11 @@ const MyPage: React.FC = () => {
 
     setIsUploadingImage(true);
 
-    try {
-      // 이미지 미리보기용 Data URL 생성
-      const reader = new FileReader();
-      reader.onload = async (e) => {
+    // 이미지 미리보기용 Data URL 생성
+    const reader = new FileReader();
+    
+    reader.onload = async (e) => {
+      try {
         const imageUrl = e.target?.result as string;
         
         // TODO: 실제 API 호출로 이미지 업로드
@@ -131,23 +132,28 @@ const MyPage: React.FC = () => {
         const userId = user?.id ? Number(user.id) : undefined;
         const updated = await updateUserProfile(userId, { profileImage: imageUrl });
         setUserProfile(updated);
-      };
+      } catch (error) {
+        console.error('Failed to upload profile image:', error);
+        alert('프로필 이미지 업로드에 실패했습니다.');
+      } finally {
+        setIsUploadingImage(false);
+        // 같은 파일을 다시 선택할 수 있도록 input 초기화
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    };
 
-      reader.onerror = () => {
-        alert('이미지를 읽는 중 오류가 발생했습니다.');
-      };
-
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error('Failed to upload profile image:', error);
-      alert('프로필 이미지 업로드에 실패했습니다.');
-    } finally {
+    reader.onerror = () => {
+      alert('이미지를 읽는 중 오류가 발생했습니다.');
       setIsUploadingImage(false);
-      // 같은 파일을 다시 선택할 수 있도록 input 초기화
+      // input 초기화
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    }
+    };
+
+    reader.readAsDataURL(file);
   };
 
   // 프로필 이미지 업로드 버튼 클릭 핸들러
@@ -334,8 +340,10 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, isEditing, onUpdate })
     department: profile?.department || '',
   });
 
+  // isEditing이 true로 변경될 때만 profile 데이터로 formData 초기화
+  // 수정 중에는 profile 변경에 의한 덮어쓰기 방지
   useEffect(() => {
-    if (profile) {
+    if (profile && isEditing) {
       setFormData({
         userName: profile.userName,
         email: profile.email,
@@ -344,7 +352,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, isEditing, onUpdate })
         department: profile.department || '',
       });
     }
-  }, [profile, isEditing]);
+  }, [isEditing]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

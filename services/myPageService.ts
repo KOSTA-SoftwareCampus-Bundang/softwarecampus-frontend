@@ -140,20 +140,15 @@ export const updateUserProfile = async (
   // 목업: 인위적인 딜레이 후 업데이트된 데이터 반환
   await new Promise((resolve) => setTimeout(resolve, 500));
   
-  // 임시 프로필 기본값 (실제 API 연동 시에는 서버가 전체 프로필을 반환)
-  const baseProfile: UserProfile = {
-    id: userId,
-    userName: '',
-    email: '',
-    phoneNumber: '',
-    role: 'USER',
-    createdAt: new Date().toISOString(),
-  };
+  // 목업: 기존 프로필 데이터를 기반으로 업데이트 (실제 API 동작 모방)
+  // userId에 따라 적절한 기본 프로필 선택
+  const baseProfile = userId === 2 ? mockAcademyUserProfile : mockUserProfile;
   
   return {
     ...baseProfile,
     ...profileData,
-  } as UserProfile;
+    id: userId, // userId는 변경되지 않도록 보장
+  };
 };
 
 /**
