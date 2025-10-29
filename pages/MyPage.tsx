@@ -567,7 +567,7 @@ const BookmarksTab: React.FC<BookmarksTabProps> = ({ bookmarks }) => {
         <div
           key={bookmark.id}
           className="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => navigate(`/courses/${bookmark.courseId}`)}
+          onClick={() => navigate(`/lectures/${bookmark.courseId}`)}
         >
           <img src={bookmark.imageUrl} alt={bookmark.courseTitle} className="w-full h-40 object-cover" />
           <div className="p-4">
