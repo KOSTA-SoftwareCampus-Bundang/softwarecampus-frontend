@@ -55,7 +55,9 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ banners, loading }) => {
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
           <div className="text-center text-white p-4">
             <h2 className="text-2xl md:text-5xl font-extrabold mb-3 md:mb-4">{currentBanner.title}</h2>
-            <p className="text-sm md:text-xl max-w-2xl mx-auto leading-relaxed">{currentBanner.subtitle}</p>
+            {currentBanner.subtitle && (
+              <p className="text-sm md:text-xl max-w-2xl mx-auto leading-relaxed">{currentBanner.subtitle}</p>
+            )}
             <Link
               to={currentBanner.link}
               className="mt-4 md:mt-8 inline-block bg-primary text-white font-bold py-2 px-6 rounded-lg hover:bg-opacity-90 transition-transform duration-300 hover:scale-105"

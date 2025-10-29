@@ -15,6 +15,7 @@ import PlaceholderPage from './pages/PlaceholderPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import MyPage from './pages/MyPage';
+import AdminPage from './pages/AdminPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
 import { useThemeStore } from './store/themeStore';
@@ -77,15 +78,7 @@ const App: React.FC = () => {
 
         {/* 관리자 전용 라우트 */}
         <Route element={<AdminRoute />}>
-          <Route
-            path="/admin"
-            element={
-              <PlaceholderPage
-                title="관리자 페이지 준비 중"
-                description="관리자 전용 기능은 현재 개발 중입니다."
-              />
-            }
-          />
+          <Route path="/admin" element={<AdminPage />} />
         </Route>
 
         {/* 권한 없음 페이지 */}

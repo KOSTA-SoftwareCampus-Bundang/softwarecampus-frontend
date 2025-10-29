@@ -553,3 +553,94 @@ export const UploadIcon: React.FC<IconProps> = ({ className, ariaLabel = '업로
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
   </svg>
 );
+
+export const LayoutDashboard: React.FC<IconProps> = ({ className, ariaLabel = '대시보드' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <rect x="3" y="3" width="7" height="7" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+    <rect x="14" y="3" width="7" height="7" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+    <rect x="14" y="14" width="7" height="7" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+    <rect x="3" y="14" width="7" height="7" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+  </svg>
+);
+
+export const ImageIcon: React.FC<IconProps> = ({ className, ariaLabel = '이미지' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+    <circle cx="8.5" cy="8.5" r="1.5" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+    <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+  </svg>
+);
+
+export const PlusIcon: React.FC<IconProps> = ({ className, ariaLabel = '추가' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+  </svg>
+);
+
+export const Trash2: React.FC<IconProps> = ({ className, ariaLabel = '삭제' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" />
+  </svg>
+);
+
+export const FilterIcon: React.FC<IconProps> = ({ className, ariaLabel = '필터' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+  </svg>
+);
+
+export const XCircle: React.FC<IconProps> = ({ className, ariaLabel = '취소' }) => (
+  <svg 
+    className={className} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={ariaLabel}
+  >
+    {ariaLabel && <title>{ariaLabel}</title>}
+    <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 9l-6 6M9 9l6 6" />
+  </svg>
+);
+
