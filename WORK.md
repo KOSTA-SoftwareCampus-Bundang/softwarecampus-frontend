@@ -78,7 +78,7 @@
    - 회원가입 링크 추가: "아직 계정이 없으신가요? 회원가입하기"
 
 **기술 스택:**
-- React 18 + TypeScript
+- React 19 + TypeScript
 - React Router DOM (라우팅)
 - Tailwind CSS (스타일링)
 - Zustand (상태 관리 - authStore 활용)
