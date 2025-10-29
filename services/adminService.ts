@@ -14,9 +14,14 @@ import {
   mockReviewApprovalRequests,
   mockAdminUsers,
   mockAdminAcademies,
-  mockAcademyQnA,
-  mockBanners
+  mockAcademyQnA
 } from '../data/mockAdminData';
+import {
+  getAllBanners,
+  createBanner as createBannerService,
+  updateBanner as updateBannerService,
+  deleteBanner as deleteBannerService
+} from './bannerService';
 
 /**
  * 과정 승인 요청 목록 조회
@@ -298,12 +303,7 @@ export const deleteAcademyQnA = async (qnaId: number): Promise<void> => {
 export const getBanners = async (
   activeOnly?: boolean
 ): Promise<BannerData[]> => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  if (activeOnly) {
-    return mockBanners.filter(banner => banner.isActive);
-  }
-  return mockBanners;
+  return getAllBanners(activeOnly);
 };
 
 /**
@@ -312,13 +312,7 @@ export const getBanners = async (
 export const createBanner = async (
   data: Omit<BannerData, 'id' | 'createdDate'>
 ): Promise<BannerData> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  return {
-    ...data,
-    id: Math.max(...mockBanners.map(b => b.id)) + 1,
-    createdDate: new Date().toISOString().split('T')[0]
-  };
+  return createBannerService(data);
 };
 
 /**
@@ -328,24 +322,12 @@ export const updateBanner = async (
   bannerId: number,
   data: Partial<BannerData>
 ): Promise<BannerData> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const banner = mockBanners.find(b => b.id === bannerId);
-  if (!banner) {
-    throw new Error('배너를 찾을 수 없습니다.');
-  }
-  
-  return { ...banner, ...data };
+  return updateBannerService(bannerId, data);
 };
 
 /**
  * 배너 삭제
  */
 export const deleteBanner = async (bannerId: number): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const index = mockBanners.findIndex(b => b.id === bannerId);
-  if (index === -1) {
-    throw new Error('배너를 찾을 수 없습니다.');
-  }
+  return deleteBannerService(bannerId);
 };

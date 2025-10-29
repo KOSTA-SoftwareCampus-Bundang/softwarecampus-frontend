@@ -67,12 +67,14 @@ export interface AcademyQnA {
 export interface BannerData {
   id: number;
   title: string;
-  imageUrl: string;
+  description?: string; // 배너에 표시될 설명 텍스트 (선택사항)
+  imageFile?: File; // 업로드된 이미지 파일
+  imageUrl?: string; // 이미지 URL (파일 업로드 후 생성되거나 기존 데이터)
   linkUrl: string;
   displayOrder: number;
   isActive: boolean;
-  startDate: string;
-  endDate: string;
+  startDate?: string; // 노출 시작일 (없으면 무기한)
+  endDate?: string; // 노출 종료일 (없으면 무기한)
   createdDate: string;
 }
 
@@ -291,39 +293,3 @@ export const mockAcademyQnA: AcademyQnA[] = [
   }
 ];
 
-// 배너 관리 목업 데이터
-export const mockBanners: BannerData[] = [
-  {
-    id: 1,
-    title: '겨울 특별 할인 이벤트',
-    imageUrl: 'https://picsum.photos/seed/banner1/1200/400',
-    linkUrl: '/events/winter-sale',
-    displayOrder: 1,
-    isActive: true,
-    startDate: '2025-10-15',
-    endDate: '2025-12-31',
-    createdDate: '2025-10-10'
-  },
-  {
-    id: 2,
-    title: '신규 AI 과정 오픈',
-    imageUrl: 'https://picsum.photos/seed/banner2/1200/400',
-    linkUrl: '/lectures?q=AI',
-    displayOrder: 2,
-    isActive: true,
-    startDate: '2025-10-20',
-    endDate: '2025-11-30',
-    createdDate: '2025-10-18'
-  },
-  {
-    id: 3,
-    title: '취업 성공 후기 이벤트',
-    imageUrl: 'https://picsum.photos/seed/banner3/1200/400',
-    linkUrl: '/community?category=진로이야기',
-    displayOrder: 3,
-    isActive: false,
-    startDate: '2025-09-01',
-    endDate: '2025-10-15',
-    createdDate: '2025-08-25'
-  }
-];

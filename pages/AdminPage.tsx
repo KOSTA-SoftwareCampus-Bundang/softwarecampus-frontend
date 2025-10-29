@@ -15,7 +15,9 @@ import {
   EditIcon,
   Trash2,
   Eye,
-  FilterIcon
+  FilterIcon,
+  ChevronUp,
+  ChevronDown
 } from '../components/icons/Icons';
 import {
   getCourseApprovalRequests,
@@ -87,6 +89,12 @@ const AdminPage: React.FC = () => {
   // 과정 상세 모달
   const [selectedCourse, setSelectedCourse] = useState<CourseApprovalRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 배너 편집 모달
+  const [selectedBanner, setSelectedBanner] = useState<BannerData | null>(null);
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
+  const [bannerFormData, setBannerFormData] = useState<Partial<BannerData>>({});
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   // 데이터 로드
   useEffect(() => {
@@ -206,6 +214,116 @@ const AdminPage: React.FC = () => {
     setSelectedCourse(null);
   };
 
+  // 배너 추가/편집 열기
+  const handleBannerEdit = (banner?: BannerData) => {
+    if (banner) {
+      setSelectedBanner(banner);
+      setBannerFormData(banner);
+      setImagePreview(banner.imageUrl || '');
+    } else {
+      setSelectedBanner(null);
+      // 새 배너는 자동으로 마지막 순서로 설정
+      const maxOrder = banners.length > 0 ? Math.max(...banners.map(b => b.displayOrder)) : 0;
+      setBannerFormData({
+        title: '',
+        description: '',
+        linkUrl: '',
+        displayOrder: maxOrder + 1,
+        isActive: true
+      });
+      setImagePreview('');
+    }
+    setIsBannerModalOpen(true);
+  };
+
+  // 배너 모달 닫기
+  const handleCloseBannerModal = () => {
+    setIsBannerModalOpen(false);
+    setSelectedBanner(null);
+    setBannerFormData({});
+    setImagePreview('');
+  };
+
+  // 이미지 파일 선택 핸들러
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBannerFormData({ ...bannerFormData, imageFile: file });
+      
+      // 미리보기 생성
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // 배너 저장
+  const handleSaveBanner = async () => {
+    try {
+      if (selectedBanner) {
+        // 수정
+        await updateBanner(selectedBanner.id, bannerFormData);
+      } else {
+        // 신규 등록
+        await createBanner(bannerFormData as Omit<BannerData, 'id' | 'createdDate'>);
+      }
+      await loadData();
+      handleCloseBannerModal();
+    } catch (error) {
+      console.error('Failed to save banner:', error);
+    }
+  };
+
+  // 배너 삭제
+  const handleBannerDelete = async (bannerId: number) => {
+    if (!confirm('정말로 이 배너를 삭제하시겠습니까?')) return;
+    try {
+      await deleteBanner(bannerId);
+      await loadData();
+    } catch (error) {
+      console.error('Failed to delete banner:', error);
+    }
+  };
+
+  // 배너 순서 이동
+  const handleBannerMove = async (bannerId: number, direction: 'up' | 'down') => {
+    // displayOrder로 정렬된 배너 목록
+    const sortedBanners = [...banners].sort((a, b) => a.displayOrder - b.displayOrder);
+    const currentIndex = sortedBanners.findIndex(b => b.id === bannerId);
+    
+    if (currentIndex === -1) return;
+    if (direction === 'up' && currentIndex === 0) return;
+    if (direction === 'down' && currentIndex === sortedBanners.length - 1) return;
+    
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    const currentBanner = sortedBanners[currentIndex];
+    const targetBanner = sortedBanners[targetIndex];
+    
+    try {
+      // UI 즉시 업데이트
+      const updatedBanners = [...banners].map(banner => {
+        if (banner.id === currentBanner.id) {
+          return { ...banner, displayOrder: targetBanner.displayOrder };
+        }
+        if (banner.id === targetBanner.id) {
+          return { ...banner, displayOrder: currentBanner.displayOrder };
+        }
+        return banner;
+      });
+      setBanners(updatedBanners);
+      
+      // 서버에 순서 교환 요청
+      await updateBanner(currentBanner.id, { displayOrder: targetBanner.displayOrder });
+      await updateBanner(targetBanner.id, { displayOrder: currentBanner.displayOrder });
+    } catch (error) {
+      console.error('Failed to move banner:', error);
+      // 에러 발생 시 원래 데이터로 복구
+      await loadData();
+    }
+  };
+
   // 필터링된 데이터
   const filteredCourseRequests = courseRequests.filter(req =>
     courseFilter === '전체' ? true : req.status === courseFilter
@@ -235,10 +353,12 @@ const AdminPage: React.FC = () => {
     qnaStatusFilter === '전체' ? true : qna.status === qnaStatusFilter
   );
 
-  const filteredBanners = banners.filter(banner => {
-    if (bannerFilter === '전체') return true;
-    return bannerFilter === '활성' ? banner.isActive : !banner.isActive;
-  });
+  const filteredBanners = banners
+    .filter(banner => {
+      if (bannerFilter === '전체') return true;
+      return bannerFilter === '활성' ? banner.isActive : !banner.isActive;
+    })
+    .sort((a, b) => a.displayOrder - b.displayOrder);
 
   // 대시보드 통계
   const stats = {
@@ -679,22 +799,102 @@ const AdminPage: React.FC = () => {
               {/* 배너 관리 */}
               {activeTab === 'banners' && (
                 <div className="space-y-6">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white">배너 관리</h2>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">배너 관리</h2>
+                    <div className="flex items-center gap-4">
+                      <select
+                        value={bannerFilter}
+                        onChange={(e) => setBannerFilter(e.target.value as any)}
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      >
+                        <option value="전체">전체</option>
+                        <option value="활성">활성</option>
+                        <option value="비활성">비활성</option>
+                      </select>
+                      <button 
+                        onClick={() => handleBannerEdit()}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors"
+                      >
+                        <PlusIcon className="w-5 h-5" />
+                        배너 추가
+                      </button>
+                    </div>
+                  </div>
                   <div className="grid gap-6">
-                    {filteredBanners.map(banner => (
+                    {filteredBanners.map((banner, index) => (
                       <div key={banner.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
                         <div className="flex">
                           <div className="w-64 h-32 bg-gray-200 dark:bg-gray-700 flex-shrink-0">
                             <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />
                           </div>
                           <div className="flex-1 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{banner.title}</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">링크: {banner.linkUrl}</p>
-                            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                              <span>기간: {banner.startDate} ~ {banner.endDate}</span>
-                              <span className={`px-2 py-1 rounded-full ${banner.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
-                                {banner.isActive ? '활성' : '비활성'}
-                              </span>
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-semibold">
+                                    {banner.displayOrder}
+                                  </span>
+                                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{banner.title}</h3>
+                                </div>
+                                {banner.description && (
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{banner.description}</p>
+                                )}
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">링크: {banner.linkUrl}</p>
+                                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                  {banner.startDate && banner.endDate ? (
+                                    <span>기간: {banner.startDate} ~ {banner.endDate}</span>
+                                  ) : (
+                                    <span>기간: 무기한</span>
+                                  )}
+                                  <span className={`px-2 py-1 rounded-full ${banner.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                                    {banner.isActive ? '활성' : '비활성'}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 ml-4">
+                                {/* 순서 이동 버튼 */}
+                                <div className="flex flex-col gap-1">
+                                  <button
+                                    onClick={() => handleBannerMove(banner.id, 'up')}
+                                    disabled={index === 0}
+                                    className={`p-1 rounded ${
+                                      index === 0
+                                        ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                                        : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                                    title="위로 이동"
+                                  >
+                                    <ChevronUp className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleBannerMove(banner.id, 'down')}
+                                    disabled={index === filteredBanners.length - 1}
+                                    className={`p-1 rounded ${
+                                      index === filteredBanners.length - 1
+                                        ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                                        : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                                    title="아래로 이동"
+                                  >
+                                    <ChevronDown className="w-4 h-4" />
+                                  </button>
+                                </div>
+                                <div className="h-12 w-px bg-gray-300 dark:bg-gray-600"></div>
+                                <button
+                                  onClick={() => handleBannerEdit(banner)}
+                                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                  title="수정"
+                                >
+                                  <EditIcon className="w-5 h-5" />
+                                </button>
+                                <button
+                                  onClick={() => handleBannerDelete(banner.id)}
+                                  className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                                  title="삭제"
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -839,6 +1039,192 @@ const AdminPage: React.FC = () => {
                   </button>
                 </div>
               ) : null}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 배너 편집 모달 */}
+      {isBannerModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            {/* 배경 오버레이 */}
+            <div 
+              className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75"
+              onClick={handleCloseBannerModal}
+            />
+
+            {/* 모달 센터링 */}
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            {/* 모달 컨텐츠 */}
+            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+              {/* 헤더 */}
+              <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {selectedBanner ? '배너 수정' : '배너 추가'}
+                  </h3>
+                  <button
+                    onClick={handleCloseBannerModal}
+                    className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                  >
+                    <XIcon className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* 바디 */}
+              <div className="px-6 py-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    배너 제목
+                  </label>
+                  <input
+                    type="text"
+                    value={bannerFormData.title || ''}
+                    onChange={(e) => setBannerFormData({ ...bannerFormData, title: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                    placeholder="배너 제목을 입력하세요"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    설명 (선택사항)
+                  </label>
+                  <textarea
+                    value={bannerFormData.description || ''}
+                    onChange={(e) => setBannerFormData({ ...bannerFormData, description: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                    placeholder="배너에 표시할 설명을 입력하세요 (비어있으면 표시되지 않습니다)"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    배너 이미지
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageFileChange}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300"
+                  />
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <img 
+                        src={imagePreview} 
+                        alt="미리보기" 
+                        className="w-full h-40 object-cover rounded-lg"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x400?text=Invalid+Image';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    이미지를 선택하지 않으면 기본 이미지가 사용됩니다.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    링크 URL
+                  </label>
+                  <input
+                    type="text"
+                    value={bannerFormData.linkUrl || ''}
+                    onChange={(e) => setBannerFormData({ ...bannerFormData, linkUrl: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                    placeholder="/lectures?category=frontend"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    활성 상태
+                  </label>
+                  <select
+                    value={bannerFormData.isActive ? 'true' : 'false'}
+                    onChange={(e) => setBannerFormData({ ...bannerFormData, isActive: e.target.value === 'true' })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  >
+                    <option value="true">활성</option>
+                    <option value="false">비활성</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    배너의 표시 순서는 목록에서 위/아래 버튼으로 조정할 수 있습니다.
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center mb-3">
+                    <input
+                      type="checkbox"
+                      id="unlimitedPeriod"
+                      checked={!bannerFormData.startDate && !bannerFormData.endDate}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setBannerFormData({ ...bannerFormData, startDate: undefined, endDate: undefined });
+                        } else {
+                          const today = new Date().toISOString().split('T')[0];
+                          const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                          setBannerFormData({ ...bannerFormData, startDate: today, endDate: nextMonth });
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                    <label htmlFor="unlimitedPeriod" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      무기한 노출
+                    </label>
+                  </div>
+
+                  {(bannerFormData.startDate || bannerFormData.endDate) && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          노출 시작일
+                        </label>
+                        <input
+                          type="date"
+                          value={bannerFormData.startDate || ''}
+                          onChange={(e) => setBannerFormData({ ...bannerFormData, startDate: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          노출 종료일
+                        </label>
+                        <input
+                          type="date"
+                          value={bannerFormData.endDate || ''}
+                          onChange={(e) => setBannerFormData({ ...bannerFormData, endDate: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 푸터 */}
+              <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3">
+                <button
+                  onClick={handleCloseBannerModal}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-900 dark:text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleSaveBanner}
+                  className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  저장
+                </button>
+              </div>
             </div>
           </div>
         </div>
