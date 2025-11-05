@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   LayoutDashboard,
   BookOpenIcon,
@@ -58,14 +58,32 @@ type TabType = 'dashboard' | 'courses' | 'reviews' | 'users' | 'academies' | 'ba
 const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // AbortController를 저장하여 요청 취소 관리
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
+  // 작업별 로딩 상태
+  const [isProcessingCourseApproval, setIsProcessingCourseApproval] = useState(false);
+  const [isProcessingReviewApproval, setIsProcessingReviewApproval] = useState(false);
+  const [isProcessingCourseRestore, setIsProcessingCourseRestore] = useState(false);
+  const [isProcessingUserStatus, setIsProcessingUserStatus] = useState(false);
+  const [isProcessingUserDelete, setIsProcessingUserDelete] = useState(false);
+  const [isProcessingAcademyDelete, setIsProcessingAcademyDelete] = useState(false);
+  const [isProcessingBannerSave, setIsProcessingBannerSave] = useState(false);
+  const [isProcessingBannerDelete, setIsProcessingBannerDelete] = useState(false);
+  const [isProcessingBannerMove, setIsProcessingBannerMove] = useState(false);
+  
+  // 토스트 알림 상태
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // 과정 승인 요청
   const [courseRequests, setCourseRequests] = useState<CourseApprovalRequest[]>([]);
-  const [courseFilter, setCourseFilter] = useState<'전체' | '대기' | '승인' | '거부'>('전체');
+  const [courseFilter, setCourseFilter] = useState<'전체' | '대기' | '승인' | '거부'>('대기');
 
   // 리뷰 승인 요청
   const [reviewRequests, setReviewRequests] = useState<ReviewApprovalRequest[]>([]);
-  const [reviewFilter, setReviewFilter] = useState<'전체' | '대기' | '승인' | '거부'>('전체');
+  const [reviewFilter, setReviewFilter] = useState<'전체' | '대기' | '승인' | '거부'>('대기');
 
   // 회원 관리
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -95,32 +113,78 @@ const AdminPage: React.FC = () => {
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [bannerFormData, setBannerFormData] = useState<Partial<BannerData>>({});
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [bannerValidationError, setBannerValidationError] = useState<string>('');
+
+  // 토스트 알림 표시 헬퍼
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+  };
+
+  // 토스트 자동 닫기
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   // 데이터 로드
   useEffect(() => {
     loadData();
+    
+    // 클린업: 컴포넌트 언마운트 시 진행 중인 요청 취소
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [activeTab]);
 
   const loadData = async () => {
+    // 이전 요청이 진행 중이면 취소
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // 새로운 AbortController 생성
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    
     setIsLoading(true);
+    setError(null);
+    
     try {
+      // Note: 현재 서비스 함수들이 AbortSignal을 지원하지 않으므로
+      // 응답 후 상태 업데이트 전에 취소 여부를 확인
       if (activeTab === 'courses') {
         const requests = await getCourseApprovalRequests();
-        setCourseRequests(requests);
+        if (!controller.signal.aborted) {
+          setCourseRequests(requests);
+        }
       } else if (activeTab === 'reviews') {
         const requests = await getReviewApprovalRequests();
-        setReviewRequests(requests);
+        if (!controller.signal.aborted) {
+          setReviewRequests(requests);
+        }
       } else if (activeTab === 'users') {
         const userList = await getAdminUsers();
-        setUsers(userList);
+        if (!controller.signal.aborted) {
+          setUsers(userList);
+        }
       } else if (activeTab === 'academies') {
         const academyList = await getAdminAcademies();
-        setAcademies(academyList);
         const qna = await getAcademyQnA();
-        setQnaList(qna);
+        if (!controller.signal.aborted) {
+          setAcademies(academyList);
+          setQnaList(qna);
+        }
       } else if (activeTab === 'banners') {
         const bannerList = await getBanners();
-        setBanners(bannerList);
+        if (!controller.signal.aborted) {
+          setBanners(bannerList);
+        }
       } else if (activeTab === 'dashboard') {
         // 대시보드 데이터 로드
         const [courses, reviews, userList] = await Promise.all([
@@ -128,77 +192,138 @@ const AdminPage: React.FC = () => {
           getReviewApprovalRequests(),
           getAdminUsers()
         ]);
-        setCourseRequests(courses);
-        setReviewRequests(reviews);
-        setUsers(userList);
+        if (!controller.signal.aborted) {
+          setCourseRequests(courses);
+          setReviewRequests(reviews);
+          setUsers(userList);
+        }
       }
     } catch (error) {
-      console.error('Failed to load admin data:', error);
+      // AbortError는 무시 (정상적인 취소)
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+      
+      if (!controller.signal.aborted) {
+        console.error('Failed to load admin data:', error);
+        setError(error instanceof Error ? error.message : '관리자 데이터를 불러오는데 실패했습니다.');
+      }
     } finally {
-      setIsLoading(false);
+      // 취소되지 않은 경우에만 로딩 상태 해제
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+      }
     }
   };
 
   // 과정 승인 처리
-  const handleCourseApproval = async (requestId: number, action: '승인' | '거부') => {
+  const handleCourseApproval = async (requestId: number, action: '승인' | '거부'): Promise<boolean> => {
+    if (isProcessingCourseApproval) return false;
+    
+    setIsProcessingCourseApproval(true);
     try {
       await processCourseApproval(requestId, action);
       await loadData();
+      showToast(`과정이 ${action}되었습니다.`, 'success');
+      return true;
     } catch (error) {
       console.error('Failed to process course approval:', error);
+      showToast(error instanceof Error ? error.message : '과정 처리에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setIsProcessingCourseApproval(false);
     }
   };
 
   // 리뷰 승인 처리
-  const handleReviewApproval = async (requestId: number, action: '승인' | '거부') => {
+  const handleReviewApproval = async (requestId: number, action: '승인' | '거부'): Promise<boolean> => {
+    if (isProcessingReviewApproval) return false;
+    
+    setIsProcessingReviewApproval(true);
     try {
       await processReviewApproval(requestId, action);
       await loadData();
+      showToast(`리뷰가 ${action}되었습니다.`, 'success');
+      return true;
     } catch (error) {
       console.error('Failed to process review approval:', error);
+      showToast(error instanceof Error ? error.message : '리뷰 처리에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setIsProcessingReviewApproval(false);
     }
   };
 
   // 과정 복구 처리
-  const handleCourseRestore = async (requestId: number) => {
-    if (!confirm('이 과정을 복구하시겠습니까?')) return;
+  const handleCourseRestore = async (requestId: number): Promise<boolean> => {
+    if (isProcessingCourseRestore) return false;
+    if (!confirm('이 과정을 복구하시겠습니까?')) return false;
+    
+    setIsProcessingCourseRestore(true);
     try {
       await restoreCourse(requestId);
       await loadData();
+      showToast('과정이 복구되었습니다.', 'success');
+      return true;
     } catch (error) {
       console.error('Failed to restore course:', error);
+      showToast(error instanceof Error ? error.message : '과정 복구에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setIsProcessingCourseRestore(false);
     }
   };
 
   // 회원 상태 변경
   const handleUserStatusChange = async (userId: number, status: '활성' | '정지' | '탈퇴') => {
+    if (isProcessingUserStatus) return;
+    
+    setIsProcessingUserStatus(true);
     try {
       await updateUserStatus(userId, status);
       await loadData();
+      showToast(`회원 상태가 '${status}'(으)로 변경되었습니다.`, 'success');
     } catch (error) {
       console.error('Failed to update user status:', error);
+      showToast(error instanceof Error ? error.message : '회원 상태 변경에 실패했습니다.', 'error');
+    } finally {
+      setIsProcessingUserStatus(false);
     }
   };
 
   // 회원 삭제
   const handleUserDelete = async (userId: number) => {
+    if (isProcessingUserDelete) return;
     if (!confirm('정말로 이 회원을 삭제하시겠습니까?')) return;
+    
+    setIsProcessingUserDelete(true);
     try {
       await deleteUser(userId);
       await loadData();
+      showToast('회원이 삭제되었습니다.', 'success');
     } catch (error) {
       console.error('Failed to delete user:', error);
+      showToast(error instanceof Error ? error.message : '회원 삭제에 실패했습니다.', 'error');
+    } finally {
+      setIsProcessingUserDelete(false);
     }
   };
 
   // 훈련기관 삭제
   const handleAcademyDelete = async (academyId: number) => {
+    if (isProcessingAcademyDelete) return;
     if (!confirm('정말로 이 훈련기관을 삭제하시겠습니까?')) return;
+    
+    setIsProcessingAcademyDelete(true);
     try {
       await deleteAcademy(academyId);
       await loadData();
+      showToast('훈련기관이 삭제되었습니다.', 'success');
     } catch (error) {
       console.error('Failed to delete academy:', error);
+      showToast(error instanceof Error ? error.message : '훈련기관 삭제에 실패했습니다.', 'error');
+    } finally {
+      setIsProcessingAcademyDelete(false);
     }
   };
 
@@ -223,7 +348,8 @@ const AdminPage: React.FC = () => {
     } else {
       setSelectedBanner(null);
       // 새 배너는 자동으로 마지막 순서로 설정
-      const maxOrder = banners.length > 0 ? Math.max(...banners.map(b => b.displayOrder)) : 0;
+      const safeBanners = banners || [];
+      const maxOrder = safeBanners.length > 0 ? Math.max(...safeBanners.map(b => b.displayOrder)) : 0;
       setBannerFormData({
         title: '',
         description: '',
@@ -238,59 +364,153 @@ const AdminPage: React.FC = () => {
 
   // 배너 모달 닫기
   const handleCloseBannerModal = () => {
+    // 이미지 프리뷰 URL 정리
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    
     setIsBannerModalOpen(false);
     setSelectedBanner(null);
     setBannerFormData({});
     setImagePreview('');
+    setBannerValidationError('');
   };
+
+  // 이미지 프리뷰 정리 (컴포넌트 언마운트 시)
+  useEffect(() => {
+    return () => {
+      // 컴포넌트 언마운트 시 blob URL 정리
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   // 이미지 파일 선택 핸들러
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // 이전 프리뷰 URL 정리
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+      
       setBannerFormData({ ...bannerFormData, imageFile: file });
       
-      // 미리보기 생성
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      // 미리보기 생성 (ObjectURL 사용)
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
     }
+  };
+
+  // 배너 유효성 검사
+  const validateBannerForm = (): string | null => {
+    const title = bannerFormData.title?.trim();
+    const linkUrl = bannerFormData.linkUrl?.trim();
+    
+    // 제목 검증
+    if (!title) {
+      return '배너 제목을 입력해주세요.';
+    }
+    
+    // 이미지 검증 (신규 등록 시 또는 수정 시 새 이미지 선택한 경우)
+    if (!selectedBanner) {
+      // 신규 등록: 이미지 파일 또는 URL 필수
+      if (!bannerFormData.imageFile && !bannerFormData.imageUrl?.trim()) {
+        return '배너 이미지를 선택해주세요.';
+      }
+    }
+    // 수정 시에는 기존 imageUrl이 있으면 새 이미지 선택은 선택사항
+    
+    // 링크 URL 검증
+    if (!linkUrl) {
+      return '링크 URL을 입력해주세요.';
+    }
+    
+    // URL 형식 검증
+    try {
+      new URL(linkUrl);
+    } catch {
+      // URL 형식이 아닌 경우 상대 경로로 간주하고 / 로 시작하는지 확인
+      if (!linkUrl.startsWith('/') && !linkUrl.startsWith('http://') && !linkUrl.startsWith('https://')) {
+        return '올바른 URL 형식이 아닙니다. (예: https://example.com 또는 /path)';
+      }
+    }
+    
+    return null;
   };
 
   // 배너 저장
   const handleSaveBanner = async () => {
+    if (isProcessingBannerSave) return;
+    
+    // 유효성 검사
+    const validationError = validateBannerForm();
+    if (validationError) {
+      setBannerValidationError(validationError);
+      showToast(validationError, 'error');
+      return;
+    }
+    
+    setBannerValidationError('');
+    setIsProcessingBannerSave(true);
+    
     try {
+      // 입력값 trim 처리
+      const trimmedData = {
+        ...bannerFormData,
+        title: bannerFormData.title?.trim(),
+        description: bannerFormData.description?.trim(),
+        linkUrl: bannerFormData.linkUrl?.trim(),
+        imageUrl: bannerFormData.imageUrl?.trim()
+      };
+      
       if (selectedBanner) {
         // 수정
-        await updateBanner(selectedBanner.id, bannerFormData);
+        await updateBanner(selectedBanner.id, trimmedData);
+        showToast('배너가 수정되었습니다.', 'success');
       } else {
         // 신규 등록
-        await createBanner(bannerFormData as Omit<BannerData, 'id' | 'createdDate'>);
+        await createBanner(trimmedData as Omit<BannerData, 'id' | 'createdDate'>);
+        showToast('배너가 등록되었습니다.', 'success');
       }
       await loadData();
       handleCloseBannerModal();
     } catch (error) {
       console.error('Failed to save banner:', error);
+      showToast(error instanceof Error ? error.message : '배너 저장에 실패했습니다.', 'error');
+    } finally {
+      setIsProcessingBannerSave(false);
     }
   };
 
   // 배너 삭제
   const handleBannerDelete = async (bannerId: number) => {
+    if (isProcessingBannerDelete) return;
     if (!confirm('정말로 이 배너를 삭제하시겠습니까?')) return;
+    
+    setIsProcessingBannerDelete(true);
     try {
       await deleteBanner(bannerId);
       await loadData();
+      showToast('배너가 삭제되었습니다.', 'success');
     } catch (error) {
       console.error('Failed to delete banner:', error);
+      showToast(error instanceof Error ? error.message : '배너 삭제에 실패했습니다.', 'error');
+    } finally {
+      setIsProcessingBannerDelete(false);
     }
   };
 
   // 배너 순서 이동
   const handleBannerMove = async (bannerId: number, direction: 'up' | 'down') => {
+    if (isProcessingBannerMove) return;
+    
+    const safeBanners = banners || [];
+    if (safeBanners.length === 0) return;
+    
     // displayOrder로 정렬된 배너 목록
-    const sortedBanners = [...banners].sort((a, b) => a.displayOrder - b.displayOrder);
+    const sortedBanners = [...safeBanners].sort((a, b) => a.displayOrder - b.displayOrder);
     const currentIndex = sortedBanners.findIndex(b => b.id === bannerId);
     
     if (currentIndex === -1) return;
@@ -301,9 +521,10 @@ const AdminPage: React.FC = () => {
     const currentBanner = sortedBanners[currentIndex];
     const targetBanner = sortedBanners[targetIndex];
     
+    setIsProcessingBannerMove(true);
     try {
       // UI 즉시 업데이트
-      const updatedBanners = [...banners].map(banner => {
+      const updatedBanners = [...safeBanners].map(banner => {
         if (banner.id === currentBanner.id) {
           return { ...banner, displayOrder: targetBanner.displayOrder };
         }
@@ -317,23 +538,59 @@ const AdminPage: React.FC = () => {
       // 서버에 순서 교환 요청
       await updateBanner(currentBanner.id, { displayOrder: targetBanner.displayOrder });
       await updateBanner(targetBanner.id, { displayOrder: currentBanner.displayOrder });
+      showToast('배너 순서가 변경되었습니다.', 'success');
     } catch (error) {
       console.error('Failed to move banner:', error);
+      showToast(error instanceof Error ? error.message : '배너 순서 변경에 실패했습니다.', 'error');
       // 에러 발생 시 원래 데이터로 복구
       await loadData();
+    } finally {
+      setIsProcessingBannerMove(false);
     }
   };
 
+  // 배너 폼 유효성 검사 (실시간)
+  const isBannerFormValid = useMemo(() => {
+    const title = bannerFormData.title?.trim();
+    const linkUrl = bannerFormData.linkUrl?.trim();
+    
+    // 제목 검증
+    if (!title) return false;
+    
+    // 이미지 검증
+    if (!selectedBanner) {
+      // 신규 등록: 이미지 파일 또는 URL 필수
+      if (!bannerFormData.imageFile && !bannerFormData.imageUrl?.trim()) {
+        return false;
+      }
+    }
+    
+    // 링크 URL 검증
+    if (!linkUrl) return false;
+    
+    // URL 형식 검증
+    try {
+      new URL(linkUrl);
+      return true;
+    } catch {
+      // 상대 경로인 경우
+      if (linkUrl.startsWith('/') || linkUrl.startsWith('http://') || linkUrl.startsWith('https://')) {
+        return true;
+      }
+      return false;
+    }
+  }, [bannerFormData, selectedBanner]);
+
   // 필터링된 데이터
-  const filteredCourseRequests = courseRequests.filter(req =>
+  const filteredCourseRequests = (courseRequests || []).filter(req =>
     courseFilter === '전체' ? true : req.status === courseFilter
   );
 
-  const filteredReviewRequests = reviewRequests.filter(req =>
+  const filteredReviewRequests = (reviewRequests || []).filter(req =>
     reviewFilter === '전체' ? true : req.status === reviewFilter
   );
 
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = (users || []).filter(user => {
     const matchesRole = userRoleFilter === '전체' || user.role === userRoleFilter;
     const matchesStatus = userStatusFilter === '전체' || user.status === userStatusFilter;
     const matchesSearch = !userSearchTerm ||
@@ -342,32 +599,32 @@ const AdminPage: React.FC = () => {
     return matchesRole && matchesStatus && matchesSearch;
   });
 
-  const filteredAcademies = academies.filter(academy => {
+  const filteredAcademies = (academies || []).filter(academy => {
     const matchesStatus = academyStatusFilter === '전체' || academy.status === academyStatusFilter;
     const matchesSearch = !academySearchTerm ||
       academy.name.toLowerCase().includes(academySearchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
-  const filteredQnA = qnaList.filter(qna =>
+  const filteredQnA = (qnaList || []).filter(qna =>
     qnaStatusFilter === '전체' ? true : qna.status === qnaStatusFilter
   );
 
-  const filteredBanners = banners
+  const filteredBanners = (banners || [])
     .filter(banner => {
       if (bannerFilter === '전체') return true;
       return bannerFilter === '활성' ? banner.isActive : !banner.isActive;
     })
     .sort((a, b) => a.displayOrder - b.displayOrder);
 
-  // 대시보드 통계
+  // 대시보드 통계 (방어적으로 빈 배열 처리)
   const stats = {
-    pendingCourses: courseRequests.filter(r => r.status === '대기').length,
-    pendingReviews: reviewRequests.filter(r => r.status === '대기').length,
-    totalUsers: users.length,
-    activeUsers: users.filter(u => u.status === '활성').length,
-    totalAcademies: academies.length,
-    activeBanners: banners.filter(b => b.isActive).length
+    pendingCourses: (courseRequests || []).filter(r => r.status === '대기').length,
+    pendingReviews: (reviewRequests || []).filter(r => r.status === '대기').length,
+    totalUsers: (users || []).length,
+    activeUsers: (users || []).filter(u => u.status === '활성').length,
+    totalAcademies: (academies || []).length,
+    activeBanners: (banners || []).filter(b => b.isActive).length
   };
 
   return (
@@ -467,6 +724,25 @@ const AdminPage: React.FC = () => {
 
         {/* 메인 콘텐츠 */}
         <main className="flex-1 p-8">
+          {/* 에러 메시지 */}
+          {error && (
+            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-red-800 dark:text-red-300">오류 발생</h3>
+                  <p className="text-sm text-red-700 dark:text-red-400 mt-1">{error}</p>
+                </div>
+                <button
+                  onClick={() => setError(null)}
+                  className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                >
+                  <XIcon className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          )}
+          
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-gray-500 dark:text-gray-400">로딩 중...</div>
@@ -679,22 +955,25 @@ const AdminPage: React.FC = () => {
                               {request.status === '대기' ? (
                                 <div className="flex items-center gap-2">
                                   <button 
-                                    onClick={() => handleCourseApproval(request.id, '승인')} 
-                                    className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors"
+                                    onClick={() => handleCourseApproval(request.id, '승인')}
+                                    disabled={isProcessingCourseApproval}
+                                    className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   >
                                     승인
                                   </button>
                                   <button 
-                                    onClick={() => handleCourseApproval(request.id, '거부')} 
-                                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors"
+                                    onClick={() => handleCourseApproval(request.id, '거부')}
+                                    disabled={isProcessingCourseApproval}
+                                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   >
                                     거부
                                   </button>
                                 </div>
                               ) : request.status === '승인' && request.requestType === '삭제' ? (
                                 <button 
-                                  onClick={() => handleCourseRestore(request.id)} 
-                                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors"
+                                  onClick={() => handleCourseRestore(request.id)}
+                                  disabled={isProcessingCourseRestore}
+                                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   복구
                                 </button>
@@ -726,8 +1005,20 @@ const AdminPage: React.FC = () => {
                           </div>
                           {request.status === '대기' && (
                             <div className="flex gap-2 ml-6">
-                              <button onClick={() => handleReviewApproval(request.id, '승인')} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm">승인</button>
-                              <button onClick={() => handleReviewApproval(request.id, '거부')} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm">거부</button>
+                              <button 
+                                onClick={() => handleReviewApproval(request.id, '승인')}
+                                disabled={isProcessingReviewApproval}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                승인
+                              </button>
+                              <button 
+                                onClick={() => handleReviewApproval(request.id, '거부')}
+                                disabled={isProcessingReviewApproval}
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                거부
+                              </button>
                             </div>
                           )}
                         </div>
@@ -821,7 +1112,14 @@ const AdminPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="grid gap-6">
-                    {filteredBanners.map((banner, index) => (
+                    {filteredBanners.map((banner, index) => {
+                      // 전체 배너 목록에서의 실제 인덱스 계산
+                      const safeBanners = banners || [];
+                      const originalIndex = safeBanners.findIndex(b => b.id === banner.id);
+                      const isFirst = originalIndex === 0;
+                      const isLast = originalIndex === safeBanners.length - 1;
+                      
+                      return (
                       <div key={banner.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
                         <div className="flex">
                           <div className="w-64 h-32 bg-gray-200 dark:bg-gray-700 flex-shrink-0">
@@ -856,9 +1154,9 @@ const AdminPage: React.FC = () => {
                                 <div className="flex flex-col gap-1">
                                   <button
                                     onClick={() => handleBannerMove(banner.id, 'up')}
-                                    disabled={index === 0}
+                                    disabled={isFirst || isProcessingBannerMove}
                                     className={`p-1 rounded ${
-                                      index === 0
+                                      isFirst || isProcessingBannerMove
                                         ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
                                         : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                                     }`}
@@ -868,9 +1166,9 @@ const AdminPage: React.FC = () => {
                                   </button>
                                   <button
                                     onClick={() => handleBannerMove(banner.id, 'down')}
-                                    disabled={index === filteredBanners.length - 1}
+                                    disabled={isLast || isProcessingBannerMove}
                                     className={`p-1 rounded ${
-                                      index === filteredBanners.length - 1
+                                      isLast || isProcessingBannerMove
                                         ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
                                         : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                                     }`}
@@ -889,7 +1187,8 @@ const AdminPage: React.FC = () => {
                                 </button>
                                 <button
                                   onClick={() => handleBannerDelete(banner.id)}
-                                  className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                                  disabled={isProcessingBannerDelete}
+                                  className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                   title="삭제"
                                 >
                                   <Trash2 className="w-5 h-5" />
@@ -899,7 +1198,8 @@ const AdminPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1008,20 +1308,26 @@ const AdminPage: React.FC = () => {
               {selectedCourse.status === '대기' ? (
                 <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3">
                   <button
-                    onClick={() => {
-                      handleCourseApproval(selectedCourse.id, '승인');
-                      handleCloseModal();
+                    onClick={async () => {
+                      const success = await handleCourseApproval(selectedCourse.id, '승인');
+                      if (success) {
+                        handleCloseModal();
+                      }
                     }}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    disabled={isProcessingCourseApproval}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     승인
                   </button>
                   <button
-                    onClick={() => {
-                      handleCourseApproval(selectedCourse.id, '거부');
-                      handleCloseModal();
+                    onClick={async () => {
+                      const success = await handleCourseApproval(selectedCourse.id, '거부');
+                      if (success) {
+                        handleCloseModal();
+                      }
                     }}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    disabled={isProcessingCourseApproval}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     거부
                   </button>
@@ -1029,11 +1335,14 @@ const AdminPage: React.FC = () => {
               ) : selectedCourse.status === '승인' && selectedCourse.requestType === '삭제' ? (
                 <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3">
                   <button
-                    onClick={() => {
-                      handleCourseRestore(selectedCourse.id);
-                      handleCloseModal();
+                    onClick={async () => {
+                      const success = await handleCourseRestore(selectedCourse.id);
+                      if (success) {
+                        handleCloseModal();
+                      }
                     }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    disabled={isProcessingCourseRestore}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     복구
                   </button>
@@ -1078,14 +1387,18 @@ const AdminPage: React.FC = () => {
               <div className="px-6 py-4 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    배너 제목
+                    배너 제목 <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={bannerFormData.title || ''}
-                    onChange={(e) => setBannerFormData({ ...bannerFormData, title: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                    onChange={(e) => {
+                      setBannerFormData({ ...bannerFormData, title: e.target.value });
+                      setBannerValidationError('');
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="배너 제목을 입력하세요"
+                    required
                   />
                 </div>
 
@@ -1096,7 +1409,7 @@ const AdminPage: React.FC = () => {
                   <textarea
                     value={bannerFormData.description || ''}
                     onChange={(e) => setBannerFormData({ ...bannerFormData, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="배너에 표시할 설명을 입력하세요 (비어있으면 표시되지 않습니다)"
                     rows={3}
                   />
@@ -1104,12 +1417,15 @@ const AdminPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    배너 이미지
+                    배너 이미지 {!selectedBanner && <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleImageFileChange}
+                    onChange={(e) => {
+                      handleImageFileChange(e);
+                      setBannerValidationError('');
+                    }}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300"
                   />
                   {imagePreview && (
@@ -1125,21 +1441,28 @@ const AdminPage: React.FC = () => {
                     </div>
                   )}
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    이미지를 선택하지 않으면 기본 이미지가 사용됩니다.
+                    {selectedBanner ? '새 이미지를 선택하면 기존 이미지가 교체됩니다.' : '이미지를 선택해주세요.'}
                   </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    링크 URL
+                    링크 URL <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={bannerFormData.linkUrl || ''}
-                    onChange={(e) => setBannerFormData({ ...bannerFormData, linkUrl: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                    placeholder="/lectures?category=frontend"
+                    onChange={(e) => {
+                      setBannerFormData({ ...bannerFormData, linkUrl: e.target.value });
+                      setBannerValidationError('');
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="https://example.com 또는 /path"
+                    required
                   />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    전체 URL (https://...) 또는 상대 경로 (/...)를 입력하세요.
+                  </p>
                 </div>
 
                 <div>
@@ -1211,21 +1534,60 @@ const AdminPage: React.FC = () => {
               </div>
 
               {/* 푸터 */}
-              <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3">
-                <button
-                  onClick={handleCloseBannerModal}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-900 dark:text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleSaveBanner}
-                  className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  저장
-                </button>
+              <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4">
+                {/* 유효성 검사 에러 메시지 */}
+                {bannerValidationError && (
+                  <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-700 dark:text-red-400">{bannerValidationError}</p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={handleCloseBannerModal}
+                    disabled={isProcessingBannerSave}
+                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-900 dark:text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleSaveBanner}
+                    disabled={isProcessingBannerSave || !isBannerFormValid}
+                    className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={!isBannerFormValid ? '필수 항목을 입력해주세요' : ''}
+                  >
+                    {isProcessingBannerSave ? '저장 중...' : '저장'}
+                  </button>
+                </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* 토스트 알림 */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-slide-up">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-lg shadow-lg ${
+            toast.type === 'success' 
+              ? 'bg-green-500 text-white' 
+              : 'bg-red-500 text-white'
+          }`}>
+            {toast.type === 'success' ? (
+              <CheckCircle className="w-5 h-5 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            )}
+            <p className="text-sm font-medium">{toast.message}</p>
+            <button
+              onClick={() => setToast(null)}
+              className="ml-2 hover:opacity-80"
+            >
+              <XIcon className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}

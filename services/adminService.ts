@@ -46,12 +46,15 @@ export const processCourseApproval = async (
 ): Promise<CourseApprovalRequest> => {
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  const request = mockCourseApprovalRequests.find(req => req.id === requestId);
-  if (!request) {
+  const index = mockCourseApprovalRequests.findIndex(req => req.id === requestId);
+  if (index === -1) {
     throw new Error('요청을 찾을 수 없습니다.');
   }
   
-  return { ...request, status: action };
+  const updatedRequest = { ...mockCourseApprovalRequests[index], status: action };
+  mockCourseApprovalRequests[index] = updatedRequest;
+  
+  return updatedRequest;
 };
 
 /**
@@ -62,15 +65,17 @@ export const restoreCourse = async (
 ): Promise<CourseApprovalRequest> => {
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  const request = mockCourseApprovalRequests.find(req => req.id === requestId);
-  if (!request) {
+  const index = mockCourseApprovalRequests.findIndex(req => req.id === requestId);
+  if (index === -1) {
     throw new Error('요청을 찾을 수 없습니다.');
   }
   
-  // 삭제 요청을 대기 상태로 되돌림
-  return { ...request, status: '대기' };
+  mockCourseApprovalRequests[index] = { 
+    ...mockCourseApprovalRequests[index], 
+    status: '대기' 
+  };
+  return mockCourseApprovalRequests[index];
 };
-
 /**
  * 리뷰 승인 요청 목록 조회
  */
@@ -94,12 +99,15 @@ export const processReviewApproval = async (
 ): Promise<ReviewApprovalRequest> => {
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  const request = mockReviewApprovalRequests.find(req => req.id === requestId);
-  if (!request) {
+  const index = mockReviewApprovalRequests.findIndex(req => req.id === requestId);
+  if (index === -1) {
     throw new Error('요청을 찾을 수 없습니다.');
   }
   
-  return { ...request, status: action };
+  const updatedRequest = { ...mockReviewApprovalRequests[index], status: action };
+  mockReviewApprovalRequests[index] = updatedRequest;
+  
+  return updatedRequest;
 };
 
 /**
@@ -145,12 +153,13 @@ export const updateUserStatus = async (
 ): Promise<AdminUser> => {
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  const user = mockAdminUsers.find(u => u.id === userId);
-  if (!user) {
+  const index = mockAdminUsers.findIndex(u => u.id === userId);
+  if (index === -1) {
     throw new Error('회원을 찾을 수 없습니다.');
   }
   
-  return { ...user, status };
+  mockAdminUsers[index] = { ...mockAdminUsers[index], status };
+  return mockAdminUsers[index];
 };
 
 /**
@@ -163,8 +172,9 @@ export const deleteUser = async (userId: number): Promise<void> => {
   if (index === -1) {
     throw new Error('회원을 찾을 수 없습니다.');
   }
+  
+  mockAdminUsers.splice(index, 1);
 };
-
 /**
  * 훈련기관 목록 조회
  */
@@ -202,12 +212,19 @@ export const createAcademy = async (
 ): Promise<AdminAcademy> => {
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  return {
+  const nextId = mockAdminAcademies.length 
+    ? Math.max(...mockAdminAcademies.map(a => a.id)) + 1 
+    : 1;
+  
+  const newAcademy = {
     ...data,
-    id: Math.max(...mockAdminAcademies.map(a => a.id)) + 1,
+    id: nextId,
     registeredDate: new Date().toISOString().split('T')[0],
     courseCount: 0
   };
+  
+  mockAdminAcademies.push(newAcademy);
+  return newAcademy;
 };
 
 /**
@@ -219,12 +236,15 @@ export const updateAcademy = async (
 ): Promise<AdminAcademy> => {
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  const academy = mockAdminAcademies.find(a => a.id === academyId);
-  if (!academy) {
+  const index = mockAdminAcademies.findIndex(a => a.id === academyId);
+  if (index === -1) {
     throw new Error('훈련기관을 찾을 수 없습니다.');
   }
   
-  return { ...academy, ...data };
+  const updatedAcademy = { ...mockAdminAcademies[index], ...data };
+  mockAdminAcademies[index] = updatedAcademy;
+  
+  return updatedAcademy;
 };
 
 /**
@@ -237,8 +257,9 @@ export const deleteAcademy = async (academyId: number): Promise<void> => {
   if (index === -1) {
     throw new Error('훈련기관을 찾을 수 없습니다.');
   }
-};
 
+  mockAdminAcademies.splice(index, 1);
+};
 /**
  * 훈련기관 Q&A 목록 조회
  */
@@ -272,17 +293,21 @@ export const answerAcademyQnA = async (
 ): Promise<AcademyQnA> => {
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  const qna = mockAcademyQnA.find(q => q.id === qnaId);
-  if (!qna) {
+  const index = mockAcademyQnA.findIndex(q => q.id === qnaId);
+  if (index === -1) {
     throw new Error('Q&A를 찾을 수 없습니다.');
   }
   
-  return {
-    ...qna,
+  const updatedQnA = {
+    ...mockAcademyQnA[index],
     answer,
     answerDate: new Date().toISOString().split('T')[0],
-    status: '답변완료'
+    status: '답변완료' as const
   };
+  
+  mockAcademyQnA[index] = updatedQnA;
+  
+  return updatedQnA;
 };
 
 /**
@@ -295,8 +320,9 @@ export const deleteAcademyQnA = async (qnaId: number): Promise<void> => {
   if (index === -1) {
     throw new Error('Q&A를 찾을 수 없습니다.');
   }
+  
+  mockAcademyQnA.splice(index, 1);
 };
-
 /**
  * 배너 목록 조회
  */

@@ -149,11 +149,22 @@ export async function updateBanner(id: number, bannerData: Partial<BannerData>):
   
   // 파일이 있으면 업로드
   if (bannerData.imageFile) {
+    // 기존 blob URL이 있으면 해제 (메모리 누수 방지)
+    const existingImageUrl = banners[index].imageUrl;
+    if (existingImageUrl && existingImageUrl.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(existingImageUrl);
+      } catch (error) {
+        console.warn('Failed to revoke blob URL:', error);
+      }
+    }
+    
     imageUrl = await uploadImage(bannerData.imageFile);
   }
   
-  // 업데이트할 데이터
-  const updatedData = { ...bannerData };
+  // imageFile을 제외한 업데이트 데이터 생성
+  const { imageFile, ...sanitizedData } = bannerData;
+  const updatedData = { ...sanitizedData };
   if (imageUrl) {
     updatedData.imageUrl = imageUrl;
   }
