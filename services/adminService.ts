@@ -115,7 +115,7 @@ export const processReviewApproval = async (
  */
 export const getAdminUsers = async (
   filters?: {
-    role?: 'admin' | 'user' | 'academy';
+    accountType?: 'ADMIN' | 'USER' | 'ACADEMY';
     status?: '활성' | '정지' | '탈퇴';
     searchTerm?: string;
   }
@@ -124,8 +124,8 @@ export const getAdminUsers = async (
   
   let users = [...mockAdminUsers];
   
-  if (filters?.role) {
-    users = users.filter(user => user.role === filters.role);
+  if (filters?.accountType) {
+    users = users.filter(user => user.accountType === filters.accountType);
   }
   
   if (filters?.status) {

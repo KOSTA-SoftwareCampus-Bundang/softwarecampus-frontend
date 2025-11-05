@@ -229,7 +229,7 @@ const MyPage: React.FC = () => {
               <p className="text-gray-600 dark:text-gray-400 mt-1">{userProfile?.email}</p>
               <div className="flex gap-2 mt-2">
                 <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm rounded-full">
-                  {userProfile?.role === 'USER' ? '일반회원' : userProfile?.role === 'ACADEMY' ? '기관회원' : '관리자'}
+                  {userProfile?.accountType === 'USER' ? '일반회원' : userProfile?.accountType === 'ACADEMY' ? '기관회원' : '관리자'}
                 </span>
                 {userProfile?.academyInfo && (
                   <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm rounded-full">
@@ -336,8 +336,8 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, isEditing, onUpdate })
     userName: profile?.userName || '',
     email: profile?.email || '',
     phoneNumber: profile?.phoneNumber || '',
-    company: profile?.company || '',
-    department: profile?.department || '',
+    affiliation: profile?.affiliation || '',
+    position: profile?.position || '',
   });
 
   // isEditing이 true로 변경될 때만 profile 데이터로 formData 초기화
@@ -348,8 +348,8 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, isEditing, onUpdate })
         userName: profile.userName,
         email: profile.email,
         phoneNumber: profile.phoneNumber,
-        company: profile.company || '',
-        department: profile.department || '',
+        affiliation: profile.affiliation || '',
+        position: profile.position || '',
       });
     }
   }, [isEditing]);
@@ -404,8 +404,8 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, isEditing, onUpdate })
             </label>
             <input
               type="text"
-              value={formData.company}
-              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+              value={formData.affiliation}
+              onChange={(e) => setFormData({ ...formData, affiliation: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
@@ -415,8 +415,8 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, isEditing, onUpdate })
             </label>
             <input
               type="text"
-              value={formData.department}
-              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              value={formData.position}
+              onChange={(e) => setFormData({ ...formData, position: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
@@ -439,8 +439,8 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, isEditing, onUpdate })
         <InfoItem label="이름" value={profile.userName} />
         <InfoItem label="이메일" value={profile.email} />
         <InfoItem label="전화번호" value={profile.phoneNumber} />
-        <InfoItem label="회사" value={profile.company || '-'} />
-        <InfoItem label="부서" value={profile.department || '-'} />
+        <InfoItem label="회사" value={profile.affiliation || '-'} />
+        <InfoItem label="부서" value={profile.position || '-'} />
         <InfoItem
           label="가입일"
           value={new Date(profile.createdAt).toLocaleDateString('ko-KR')}
@@ -493,7 +493,7 @@ const PostsTab: React.FC<PostsTabProps> = ({ posts }) => {
           </div>
           <h3 className="font-bold text-gray-900 dark:text-white mb-2">{post.title}</h3>
           <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
-            <span>조회 {post.viewCount}</span>
+            <span>조회 {post.hits}</span>
             <span>추천 {post.recommendCount}</span>
             <span>댓글 {post.commentCount}</span>
           </div>
@@ -525,7 +525,7 @@ const CommentsTab: React.FC<CommentsTabProps> = ({ comments }) => {
         <div
           key={comment.id}
           className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-          onClick={() => navigate(`/community/${comment.postId}`)}
+          onClick={() => navigate(`/community/${comment.boardId}`)}
         >
           <div className="flex items-center justify-between mb-2">
             <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-sm rounded-full">
@@ -538,7 +538,7 @@ const CommentsTab: React.FC<CommentsTabProps> = ({ comments }) => {
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
             원글: <span className="font-medium text-gray-900 dark:text-white">{comment.postTitle}</span>
           </p>
-          <p className="text-gray-700 dark:text-gray-300">{comment.content}</p>
+          <p className="text-gray-700 dark:text-gray-300">{comment.text}</p>
         </div>
       ))}
 
@@ -569,12 +569,12 @@ const BookmarksTab: React.FC<BookmarksTabProps> = ({ bookmarks }) => {
           className="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
           onClick={() => navigate(`/lectures/${bookmark.courseId}`)}
         >
-          <img src={bookmark.imageUrl} alt={bookmark.courseTitle} className="w-full h-40 object-cover" />
+          <img src={bookmark.imageUrl} alt={bookmark.courseName} className="w-full h-40 object-cover" />
           <div className="p-4">
             <h3 className="font-bold text-gray-900 dark:text-white mb-1 line-clamp-2">
-              {bookmark.courseTitle}
+              {bookmark.courseName}
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{bookmark.institution}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{bookmark.academy}</p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
                 <span className="text-yellow-500">★</span>
@@ -584,7 +584,7 @@ const BookmarksTab: React.FC<BookmarksTabProps> = ({ bookmarks }) => {
                 </span>
               </div>
               <span className="text-xs text-gray-400 dark:text-gray-500">
-                {new Date(bookmark.bookmarkedAt).toLocaleDateString('ko-KR')}
+                {new Date(bookmark.createdAt).toLocaleDateString('ko-KR')}
               </span>
             </div>
           </div>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import type { CommunityCategory } from '../types';
+import type { BoardCategory } from '../types';
+import { BOARD_CATEGORY_LABELS } from '../types';
 import { fetchBoardPosts } from '../services/communityService';
 import { Paperclip, MessageSquare, ThumbsUp, Eye } from '../components/icons/Icons';
 
@@ -12,13 +13,13 @@ const CommunityPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   
   // 허용된 카테고리 목록
-  const allowedCategories: CommunityCategory[] = ['공지사항', '진로이야기', '코딩이야기'];
+  const allowedCategories: BoardCategory[] = ['NOTICE', 'CAREER', 'CODING'];
   
   // 카테고리 검증
   const categoryParam = searchParams.get('category');
-  const currentCategory: CommunityCategory | undefined = 
-    categoryParam && allowedCategories.includes(categoryParam as CommunityCategory)
-      ? (categoryParam as CommunityCategory)
+  const currentCategory: BoardCategory | undefined = 
+    categoryParam && allowedCategories.includes(categoryParam as BoardCategory)
+      ? (categoryParam as BoardCategory)
       : undefined;
   
   // 페이지 번호 검증
@@ -33,7 +34,7 @@ const CommunityPage = () => {
   });
 
   // 카테고리 변경
-  const handleCategoryChange = (category: CommunityCategory | undefined) => {
+  const handleCategoryChange = (category: BoardCategory | undefined) => {
     const newParams = new URLSearchParams(searchParams);
     if (category) {
       newParams.set('category', category);
@@ -68,13 +69,7 @@ const CommunityPage = () => {
     }
   };
 
-  const categories: (CommunityCategory | undefined)[] = [undefined, '공지사항', '진로이야기', '코딩이야기'];
-  const categoryLabels: Record<string, string> = {
-    undefined: '전체',
-    공지사항: '공지사항',
-    진로이야기: '진로이야기',
-    코딩이야기: '코딩이야기',
-  };
+  const categories: (BoardCategory | undefined)[] = [undefined, 'NOTICE', 'CAREER', 'CODING'];
 
   // 총 페이지 수 계산
   const totalPages = data ? Math.ceil(data.totalCount / 20) : 0;
@@ -103,7 +98,7 @@ const CommunityPage = () => {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                 }`}
               >
-                {categoryLabels[String(category)]}
+                {category ? BOARD_CATEGORY_LABELS[category] : '전체'}
               </button>
             ))}
           </nav>
@@ -171,14 +166,14 @@ const CommunityPage = () => {
                   <div className="col-span-1 text-center">
                     <span
                       className={`inline-block px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${
-                        post.category === '공지사항'
+                        post.category === 'NOTICE'
                           ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                          : post.category === '진로이야기'
+                          : post.category === 'CAREER'
                           ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                           : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                       }`}
                     >
-                      {post.category}
+                      {BOARD_CATEGORY_LABELS[post.category]}
                     </span>
                   </div>
                   <div className="col-span-5">
@@ -187,7 +182,7 @@ const CommunityPage = () => {
                         {post.title}
                       </h3>
                       {post.hasAttachment && <Paperclip className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
-                      {post.commentCount > 0 && (
+                      {post.commentCount && post.commentCount > 0 && (
                         <span className="flex items-center gap-0.5 text-blue-600 dark:text-blue-400 text-xs flex-shrink-0">
                           <MessageSquare className="w-3.5 h-3.5" />
                           {post.commentCount}
@@ -196,11 +191,11 @@ const CommunityPage = () => {
                     </div>
                   </div>
                   <div className="col-span-2 text-center text-sm text-gray-600 dark:text-gray-400">
-                    {post.author.name}
+                    {post.author.userName}
                   </div>
                   <div className="col-span-1 text-center text-sm text-gray-600 dark:text-gray-400 flex items-center justify-center gap-1">
                     <Eye className="w-3.5 h-3.5" />
-                    {post.viewCount}
+                    {post.hits}
                   </div>
                   <div className="col-span-1 text-center text-sm text-gray-600 dark:text-gray-400 flex items-center justify-center gap-1">
                     <ThumbsUp className="w-3.5 h-3.5" />
@@ -216,14 +211,14 @@ const CommunityPage = () => {
                   <div className="flex items-start justify-between mb-2">
                     <span
                       className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                        post.category === '공지사항'
+                        post.category === 'NOTICE'
                           ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                          : post.category === '진로이야기'
+                          : post.category === 'CAREER'
                           ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                           : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                       }`}
                     >
-                      {post.category}
+                      {BOARD_CATEGORY_LABELS[post.category]}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       {formatDate(post.createdAt)}
@@ -234,11 +229,11 @@ const CommunityPage = () => {
                     {post.hasAttachment && <Paperclip className="w-4 h-4 text-gray-400" />}
                   </h3>
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                    <span>{post.author.name}</span>
+                    <span>{post.author.userName}</span>
                     <div className="flex items-center gap-3">
                       <span className="flex items-center gap-1">
                         <Eye className="w-4 h-4" />
-                        {post.viewCount}
+                        {post.hits}
                       </span>
                       <span className="flex items-center gap-1">
                         <MessageSquare className="w-4 h-4" />

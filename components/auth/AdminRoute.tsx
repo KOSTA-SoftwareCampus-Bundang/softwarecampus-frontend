@@ -20,7 +20,7 @@ const AdminRoute: React.FC = () => {
     return <Navigate to="/login" replace />;
   }
 
-  if (user?.role !== 'admin') {
+  if (user?.accountType !== 'ADMIN') {
     return <Navigate to="/unauthorized" replace />;
   }
 

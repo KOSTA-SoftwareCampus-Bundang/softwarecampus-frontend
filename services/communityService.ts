@@ -1,4 +1,4 @@
-import type { BoardPost, Comment, CommunityCategory } from '../types';
+import type { Board, Comment, BoardCategory } from '../types';
 import { mockBoardPosts, mockComments } from '../data/mockCommunityData';
 
 /**
@@ -10,12 +10,12 @@ import { mockBoardPosts, mockComments } from '../data/mockCommunityData';
  * 게시글 목록 조회 (카테고리별 필터링)
  */
 export const fetchBoardPosts = async (
-  category?: CommunityCategory,
+  category?: BoardCategory,
   page: number = 1,
   pageSize: number = 20
-): Promise<{ posts: BoardPost[]; totalCount: number }> => {
+): Promise<{ posts: Board[]; totalCount: number }> => {
   // 실제 환경에서는 axios를 사용하여 API 호출
-  // const response = await axios.get('/api/board/posts', { params: { category, page, pageSize } });
+  // const response = await axios.get('/api/boards', { params: { category, page, pageSize } });
   // return response.data;
 
   await new Promise((resolve) => setTimeout(resolve, 300)); // API 호출 시뮬레이션
@@ -46,8 +46,8 @@ export const fetchBoardPosts = async (
 /**
  * 게시글 상세 조회
  */
-export const fetchBoardPost = async (postId: number, userId?: string): Promise<BoardPost> => {
-  // 실제 환경: const response = await axios.get(`/api/board/posts/${postId}`, { 
+export const fetchBoardPost = async (postId: number, userId?: string): Promise<Board> => {
+  // 실제 환경: const response = await axios.get(`/api/boards/${postId}`, { 
   //   params: { userId } // 백엔드에서 현재 사용자의 추천 여부를 확인하여 isRecommended 필드 포함
   // });
   // return response.data;
@@ -75,19 +75,19 @@ export const fetchBoardPost = async (postId: number, userId?: string): Promise<B
  * 게시글 작성
  */
 export const createBoardPost = async (
-  data: Omit<BoardPost, 'id' | 'viewCount' | 'recommendCount' | 'commentCount' | 'createdAt' | 'updatedAt'>
-): Promise<BoardPost> => {
-  // 실제 환경: const response = await axios.post('/api/board/posts', data);
+  data: Omit<Board, 'id' | 'hits' | 'recommendCount' | 'commentCount' | 'createdAt' | 'updatedAt'>
+): Promise<Board> => {
+  // 실제 환경: const response = await axios.post('/api/boards', data);
   // return response.data;
 
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   const maxId = mockBoardPosts.length > 0 ? Math.max(...mockBoardPosts.map((p) => p.id)) : 0;
 
-  const newPost: BoardPost = {
+  const newPost: Board = {
     ...data,
     id: maxId + 1,
-    viewCount: 0,
+    hits: 0,
     recommendCount: 0,
     commentCount: 0,
     createdAt: new Date().toISOString(),
@@ -104,9 +104,9 @@ export const createBoardPost = async (
  */
 export const updateBoardPost = async (
   postId: number,
-  data: Partial<Pick<BoardPost, 'title' | 'content' | 'category'>>
-): Promise<BoardPost> => {
-  // 실제 환경: const response = await axios.put(`/api/board/posts/${postId}`, data);
+  data: Partial<Pick<Board, 'title' | 'text' | 'category'>>
+): Promise<Board> => {
+  // 실제 환경: const response = await axios.put(`/api/boards/${postId}`, data);
   // return response.data;
 
   await new Promise((resolve) => setTimeout(resolve, 500));
@@ -130,7 +130,7 @@ export const updateBoardPost = async (
  * 게시글 삭제
  */
 export const deleteBoardPost = async (postId: number): Promise<void> => {
-  // 실제 환경: await axios.delete(`/api/board/posts/${postId}`);
+  // 실제 환경: await axios.delete(`/api/boards/${postId}`);
 
   await new Promise((resolve) => setTimeout(resolve, 300));
 
@@ -146,9 +146,9 @@ export const deleteBoardPost = async (postId: number): Promise<void> => {
 /**
  * 게시글 추천
  */
-export const recommendBoardPost = async (postId: number, userId?: string): Promise<BoardPost> => {
+export const recommendBoardPost = async (postId: number, userId?: string): Promise<Board> => {
   // 실제 환경: 
-  // const response = await axios.post(`/api/board/posts/${postId}/recommend`, { userId });
+  // const response = await axios.post(`/api/boards/${postId}/recommend`, { userId });
   // return response.data;
   // 
   // 백엔드 구현:
@@ -176,7 +176,9 @@ export const recommendBoardPost = async (postId: number, userId?: string): Promi
   }
 
   // 추천 처리
-  post.recommendCount += 1;
+  if (post.recommendCount !== undefined) {
+    post.recommendCount += 1;
+  }
   localStorage.setItem(recommendKey, 'true');
 
   return {
@@ -188,8 +190,8 @@ export const recommendBoardPost = async (postId: number, userId?: string): Promi
 /**
  * 댓글 목록 조회
  */
-export const fetchComments = async (postId: number): Promise<Comment[]> => {
-  // 실제 환경: const response = await axios.get(`/api/board/posts/${postId}/comments`);
+export const fetchComments = async (boardId: number): Promise<Comment[]> => {
+  // 실제 환경: const response = await axios.get(`/api/boards/${boardId}/comments`);
   // return response.data;
   // 백엔드에서 isDeleted = false인 댓글만 반환하거나, 
   // 대댓글이 있는 경우 isDeleted = true인 댓글도 포함하여 반환
@@ -199,14 +201,14 @@ export const fetchComments = async (postId: number): Promise<Comment[]> => {
   // 백엔드 연동 시: 서버에서 이미 필터링된 데이터를 받음
   // 현재는 프론트에서 필터링 (실제로는 백엔드 쿼리에서 처리)
   const comments = mockComments
-    .filter((c) => c.postId === postId)
+    .filter((c) => c.boardId === boardId)
     .filter((c) => {
       // 삭제되지 않은 댓글은 항상 표시
       if (!c.isDeleted) return true;
       
       // 삭제된 댓글은 대댓글이 있는 경우만 표시
       const hasReplies = mockComments.some(
-        (reply) => reply.parentId === c.id && !reply.isDeleted
+        (reply) => reply.topCommentId === c.id && !reply.isDeleted
       );
       return hasReplies;
     })
@@ -219,11 +221,11 @@ export const fetchComments = async (postId: number): Promise<Comment[]> => {
  * 댓글 작성
  */
 export const createComment = async (
-  postId: number,
-  content: string,
-  parentId?: number
+  boardId: number,
+  text: string,
+  topCommentId?: number
 ): Promise<Comment> => {
-  // 실제 환경: const response = await axios.post(`/api/board/posts/${postId}/comments`, { content, parentId });
+  // 실제 환경: const response = await axios.post(`/api/boards/${boardId}/comments`, { text, topCommentId });
   // return response.data;
 
   await new Promise((resolve) => setTimeout(resolve, 300));
@@ -232,25 +234,25 @@ export const createComment = async (
 
   const newComment: Comment = {
     id: maxId + 1,
-    postId,
-    content,
+    boardId,
+    text,
     author: {
       id: 999, // 임시 사용자 ID
-      name: '현재 사용자',
+      userName: '현재 사용자',
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    parentId,
+    topCommentId,
     isDeleted: false,
   };
 
   mockComments.push(newComment);
 
   // 게시글의 댓글 수 증가 (삭제되지 않은 댓글만 카운트)
-  const post = mockBoardPosts.find((p) => p.id === postId);
-  if (post) {
+  const post = mockBoardPosts.find((p) => p.id === boardId);
+  if (post && post.commentCount !== undefined) {
     post.commentCount = mockComments.filter(
-      (c) => c.postId === postId && !c.isDeleted
+      (c) => c.boardId === boardId && !c.isDeleted
     ).length;
   }
 
@@ -260,8 +262,8 @@ export const createComment = async (
 /**
  * 댓글 수정
  */
-export const updateComment = async (commentId: number, content: string): Promise<Comment> => {
-  // 실제 환경: const response = await axios.put(`/api/board/comments/${commentId}`, { content });
+export const updateComment = async (commentId: number, text: string): Promise<Comment> => {
+  // 실제 환경: const response = await axios.put(`/api/boards/comments/${commentId}`, { text });
   // return response.data;
 
   await new Promise((resolve) => setTimeout(resolve, 300));
@@ -274,7 +276,7 @@ export const updateComment = async (commentId: number, content: string): Promise
 
   mockComments[commentIndex] = {
     ...mockComments[commentIndex],
-    content,
+    text,
     updatedAt: new Date().toISOString(),
   };
 
@@ -285,12 +287,12 @@ export const updateComment = async (commentId: number, content: string): Promise
  * 댓글 삭제 (Soft Delete)
  */
 export const deleteComment = async (commentId: number): Promise<void> => {
-  // 실제 환경: await axios.patch(`/api/board/comments/${commentId}`, { isDeleted: true });
-  // 또는: await axios.delete(`/api/board/comments/${commentId}`);
+  // 실제 환경: await axios.patch(`/api/boards/comments/${commentId}`, { isDeleted: true });
+  // 또는: await axios.delete(`/api/boards/comments/${commentId}`);
   // 
   // 백엔드 구현 방향:
   // 1. DELETE 요청 시 실제 삭제가 아닌 isDeleted = true로 업데이트
-  // 2. content를 "삭제된 댓글입니다."로 변경
+  // 2. text를 "삭제된 댓글입니다."로 변경
   // 3. updatedAt 갱신
   // 4. 게시글의 commentCount 재계산 (isDeleted = false인 댓글만 카운트)
 
@@ -308,16 +310,16 @@ export const deleteComment = async (commentId: number): Promise<void> => {
   mockComments[commentIndex] = {
     ...comment,
     isDeleted: true,
-    content: '삭제된 댓글입니다.',
+    text: '삭제된 댓글입니다.',
     updatedAt: new Date().toISOString(),
   };
 
   // 게시글의 댓글 수 업데이트 (삭제되지 않은 댓글만 카운트)
   // 백엔드에서도 commentCount를 재계산하여 업데이트 필요
-  const post = mockBoardPosts.find((p) => p.id === comment.postId);
-  if (post) {
+  const post = mockBoardPosts.find((p) => p.id === comment.boardId);
+  if (post && post.commentCount !== undefined) {
     post.commentCount = mockComments.filter(
-      (c) => c.postId === comment.postId && !c.isDeleted
+      (c) => c.boardId === comment.boardId && !c.isDeleted
     ).length;
   }
 };

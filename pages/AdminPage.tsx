@@ -88,7 +88,7 @@ const AdminPage: React.FC = () => {
   // 회원 관리
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [userSearchTerm, setUserSearchTerm] = useState('');
-  const [userRoleFilter, setUserRoleFilter] = useState<'전체' | 'admin' | 'user' | 'academy'>('전체');
+  const [userRoleFilter, setUserRoleFilter] = useState<'전체' | 'ADMIN' | 'USER' | 'ACADEMY'>('전체');
   const [userStatusFilter, setUserStatusFilter] = useState<'전체' | '활성' | '정지' | '탈퇴'>('전체');
 
   // 훈련기관 관리
@@ -591,7 +591,7 @@ const AdminPage: React.FC = () => {
   );
 
   const filteredUsers = (users || []).filter(user => {
-    const matchesRole = userRoleFilter === '전체' || user.role === userRoleFilter;
+    const matchesRole = userRoleFilter === '전체' || user.accountType === userRoleFilter;
     const matchesStatus = userStatusFilter === '전체' || user.status === userStatusFilter;
     const matchesSearch = !userSearchTerm ||
       user.username.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
@@ -1049,7 +1049,7 @@ const AdminPage: React.FC = () => {
                               <div className="text-sm font-medium text-gray-900 dark:text-white">{user.username}</div>
                               <div className="text-xs text-gray-500 dark:text-gray-400">{user.email}</div>
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{user.role === 'admin' ? '관리자' : user.role === 'academy' ? '기관' : '일반'}</td>
+                            <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{user.accountType === 'ADMIN' ? '관리자' : user.accountType === 'ACADEMY' ? '기관' : '일반'}</td>
                             <td className="px-6 py-4">
                               <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${user.status === '활성' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'}`}>
                                 {user.status}

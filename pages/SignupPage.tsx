@@ -34,9 +34,9 @@ const SignupPage: React.FC = () => {
     passwordConfirm: '',
     email: '',
     phoneNumber: '',
-    role: 'USER',
-    company: '',
-    department: '',
+    accountType: 'USER',
+    affiliation: '',
+    position: '',
   });
 
   const handleTabChange = (tab: 'USER' | 'ACADEMY') => {
@@ -47,9 +47,9 @@ const SignupPage: React.FC = () => {
       passwordConfirm: '',
       email: '',
       phoneNumber: '',
-      role: tab,
-      company: '',
-      department: '',
+      accountType: tab,
+      affiliation: '',
+      position: '',
     });
     setSelectedAcademy(null);
     setErrors({});
@@ -136,7 +136,7 @@ const SignupPage: React.FC = () => {
     }
 
     // 기관회원인 경우 기관 선택 필수
-    if (formData.role === 'ACADEMY' && !selectedAcademy) {
+    if (formData.accountType === 'ACADEMY' && !selectedAcademy) {
       newErrors.academyId = '소속 기관을 선택해주세요';
     }
 
@@ -375,14 +375,14 @@ const SignupPage: React.FC = () => {
             {activeTab === 'USER' && (
               <>
                 <div>
-                  <label htmlFor="company" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="affiliation" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     소속 회사 (선택)
                   </label>
                   <input
                     type="text"
-                    id="company"
-                    name="company"
-                    value={formData.company}
+                    id="affiliation"
+                    name="affiliation"
+                    value={formData.affiliation}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                     placeholder="회사명을 입력하세요"
@@ -390,14 +390,14 @@ const SignupPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="position" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     부서 (선택)
                   </label>
                   <input
                     type="text"
-                    id="department"
-                    name="department"
-                    value={formData.department}
+                    id="position"
+                    name="position"
+                    value={formData.position}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                     placeholder="부서명을 입력하세요"
@@ -416,7 +416,7 @@ const SignupPage: React.FC = () => {
                   <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3 flex-1">
-                        {isSafeImageUrl(selectedAcademy.logoUrl) ? (
+                        {selectedAcademy.logoUrl && isSafeImageUrl(selectedAcademy.logoUrl) ? (
                           <img
                             src={selectedAcademy.logoUrl}
                             alt={selectedAcademy.name}
