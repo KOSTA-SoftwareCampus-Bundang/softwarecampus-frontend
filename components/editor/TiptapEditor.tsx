@@ -357,6 +357,8 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ content, onChange, placehol
         heading: {
           levels: [1, 2, 3],
         },
+        // Link는 별도로 설정하므로 StarterKit에서 제외
+        link: false,
       }),
       TextStyle,
       Color,
