@@ -106,19 +106,13 @@ export const getBookmarkedCourses = async (): Promise<CourseFavorite[]> => {
 
 /**
  * 프로필 정보를 업데이트합니다.
- * @param userId 사용자 ID
+ * 인증된 사용자의 프로필을 업데이트하므로 userId는 불필요합니다.
  * @param profileData 업데이트할 프로필 정보
  * @returns 업데이트된 프로필 정보
  */
 export const updateUserProfile = async (
-  userId: number | undefined,
   profileData: Partial<Account>
 ): Promise<Account> => {
-  // userId 검증
-  if (userId === undefined) {
-    throw new Error('User ID is required to update profile');
-  }
-
   // 실제 API: const response = await axios.put('/api/accounts/me', profileData);
   // return response.data;
   
@@ -126,13 +120,11 @@ export const updateUserProfile = async (
   await new Promise((resolve) => setTimeout(resolve, 500));
   
   // 목업: 기존 프로필 데이터를 기반으로 업데이트 (실제 API 동작 모방)
-  // userId에 따라 적절한 기본 프로필 선택
-  const baseProfile = userId === 2 ? mockAcademyUserProfile : mockUserProfile;
+  const baseProfile = mockUserProfile;
   
   return {
     ...baseProfile,
     ...profileData,
-    id: userId, // userId는 변경되지 않도록 보장
   };
 };
 
