@@ -3,7 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { createBoardPost } from '../services/communityService';
 import { useAuthStore } from '../store/authStore';
-import type { CommunityCategory } from '../types';
+import type { BoardCategory } from '../types';
+import { BOARD_CATEGORY_LABELS } from '../types';
 
 // Tiptap 에디터를 lazy load
 const TiptapEditor = lazy(() => import('../components/editor/TiptapEditor'));
@@ -17,8 +18,8 @@ const CommunityWritePage = () => {
   const { user, isAuthenticated } = useAuthStore();
 
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [category, setCategory] = useState<CommunityCategory>('진로이야기');
+  const [text, setText] = useState('');
+  const [category, setCategory] = useState<BoardCategory>('CAREER');
 
   // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
   useEffect(() => {
@@ -72,16 +73,16 @@ const CommunityWritePage = () => {
       return;
     }
 
-    if (!content.trim() || content === '<p></p>') {
+    if (!text.trim() || text === '<p></p>') {
       alert('내용을 입력해주세요.');
       return;
     }
 
-    console.log('게시글 작성 시작:', { title, content, category, user });
+    console.log('게시글 작성 시작:', { title, text, category, user });
 
     createPostMutation.mutate({
       title,
-      content,
+      text,
       category,
       author: {
         // Mock 환경: user.id가 문자열 ("admin", "user" 등)
@@ -95,8 +96,9 @@ const CommunityWritePage = () => {
           // Mock 환경: 문자열 ID를 간단한 해시로 변환
           return Math.abs(user.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 1000 + 1;
         })(),
-        name: (user as any).name || user.id,
+        userName: (user as any).userName || user.id,
       },
+      isSecret: false,
       hasAttachment: false,
     });
   };
@@ -125,12 +127,12 @@ const CommunityWritePage = () => {
               </label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value as CommunityCategory)}
+                onChange={(e) => setCategory(e.target.value as BoardCategory)}
                 className="w-full md:w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
               >
-                <option value="진로이야기">진로이야기</option>
-                <option value="코딩이야기">코딩이야기</option>
-                <option value="공지사항">공지사항</option>
+                <option value="CAREER">{BOARD_CATEGORY_LABELS.CAREER}</option>
+                <option value="CODING">{BOARD_CATEGORY_LABELS.CODING}</option>
+                <option value="NOTICE">{BOARD_CATEGORY_LABELS.NOTICE}</option>
               </select>
             </div>
 
@@ -164,7 +166,7 @@ const CommunityWritePage = () => {
                   </div>
                 }
               >
-                <TiptapEditor content={content} onChange={setContent} />
+                <TiptapEditor content={text} onChange={setText} />
               </Suspense>
             </div>
           </div>

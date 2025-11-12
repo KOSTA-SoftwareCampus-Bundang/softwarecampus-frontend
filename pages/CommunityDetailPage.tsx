@@ -13,6 +13,7 @@ import {
 } from '../services/communityService';
 import { Eye, MessageSquare, ThumbsUp, Paperclip, Send, Pencil, Trash } from '../components/icons/Icons';
 import type { Comment } from '../types';
+import { BOARD_CATEGORY_LABELS } from '../types';
 import '../styles/tiptap.css';
 
 /**
@@ -20,8 +21,8 @@ import '../styles/tiptap.css';
  */
 const CommunityDetailPage = () => {
   const { postId } = useParams<{ postId?: string }>();
-  const postIdNumber = Number(postId);
-  const isValidPostId = Number.isInteger(postIdNumber) && !Number.isNaN(postIdNumber);
+  const postIdNumber = postId ? parseInt(postId, 10) : NaN;
+  const isValidPostId = !isNaN(postIdNumber) && postIdNumber > 0;
   
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -32,7 +33,7 @@ const CommunityDetailPage = () => {
   const [editingContent, setEditingContent] = useState('');
 
   // 게시글 조회
-  const { data: post, isLoading: postLoading } = useQuery({
+  const { data: post, isLoading: postLoading, error: postError } = useQuery({
     queryKey: ['boardPost', postIdNumber, user?.id],
     queryFn: () => fetchBoardPost(postIdNumber, user?.id),
     enabled: isValidPostId,
@@ -84,8 +85,8 @@ const CommunityDetailPage = () => {
 
   // 댓글 수정 mutation
   const updateCommentMutation = useMutation({
-    mutationFn: ({ commentId, content }: { commentId: number; content: string }) =>
-      updateComment(commentId, content),
+    mutationFn: ({ commentId, text }: { commentId: number; text: string }) =>
+      updateComment(commentId, text),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', postIdNumber] });
       setEditingCommentId(null);
@@ -101,6 +102,31 @@ const CommunityDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ['boardPost', postIdNumber] });
     },
   });
+
+  // XSS 공격 방지를 위한 HTML 정화 (post가 있을 때만)
+  const sanitizedContent = useMemo(() => {
+    if (!post) return '';
+    return DOMPurify.sanitize(post.text, {
+      ALLOWED_TAGS: [
+        'p', 'br', 'strong', 'em', 's', 'u', 'mark', 
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'ul', 'ol', 'li', 'blockquote', 'code', 'pre',
+        'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+        'span', 'div'
+      ],
+      ALLOWED_ATTR: [
+        'href', 'target', 'rel', 'src', 'alt', 'title',
+        'class', 'style'
+      ],
+      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    });
+  }, [post]);
+
+  // 현재 사용자가 게시글 작성자인지 확인
+  const isAuthor = useMemo(() => {
+    if (!user || !post) return false;
+    return user.id === String(post.author.id);
+  }, [user, post]);
 
   // 훅 선언 이후에 조기 반환
   if (!isValidPostId) {
@@ -135,13 +161,13 @@ const CommunityDetailPage = () => {
   // 댓글 수정 시작
   const handleEditStart = (comment: Comment) => {
     setEditingCommentId(comment.id);
-    setEditingContent(comment.content);
+    setEditingContent(comment.text);
   };
 
   // 댓글 수정 제출
   const handleEditSubmit = (commentId: number) => {
     if (editingContent.trim()) {
-      updateCommentMutation.mutate({ commentId, content: editingContent });
+      updateCommentMutation.mutate({ commentId, text: editingContent });
     }
   };
 
@@ -184,30 +210,6 @@ const CommunityDetailPage = () => {
     );
   }
 
-  // XSS 공격 방지를 위한 HTML 정화
-  const sanitizedContent = useMemo(() => {
-    return DOMPurify.sanitize(post.content, {
-      ALLOWED_TAGS: [
-        'p', 'br', 'strong', 'em', 's', 'u', 'mark', 
-        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'ul', 'ol', 'li', 'blockquote', 'code', 'pre',
-        'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
-        'span', 'div'
-      ],
-      ALLOWED_ATTR: [
-        'href', 'target', 'rel', 'src', 'alt', 'title',
-        'class', 'style'
-      ],
-      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
-    });
-  }, [post.content]);
-
-  // 현재 사용자가 게시글 작성자인지 확인
-  const isAuthor = useMemo(() => {
-    if (!user || !post) return false;
-    return user.id === String(post.author.id);
-  }, [user, post]);
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -216,14 +218,14 @@ const CommunityDetailPage = () => {
           <div className="mb-4">
             <span
               className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                post.category === '공지사항'
+                post.category === 'NOTICE'
                   ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                  : post.category === '진로이야기'
+                  : post.category === 'CAREER'
                   ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                   : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
               }`}
             >
-              {post.category}
+              {BOARD_CATEGORY_LABELS[post.category]}
             </span>
           </div>
 
@@ -235,16 +237,16 @@ const CommunityDetailPage = () => {
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">
-                {post.author.name.charAt(0)}
+                {post.author.userName.charAt(0)}
               </div>
-              <span className="font-medium">{post.author.name}</span>
+              <span className="font-medium">{post.author.userName}</span>
             </div>
             <span>•</span>
             <span>{formatDate(post.createdAt)}</span>
             <span>•</span>
             <span className="flex items-center gap-1">
               <Eye className="w-4 h-4" />
-              {post.viewCount}
+              {post.hits}
             </span>
             <span className="flex items-center gap-1">
               <MessageSquare className="w-4 h-4" />
@@ -347,21 +349,21 @@ const CommunityDetailPage = () => {
               <div key={comment.id} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-gray-700 dark:text-gray-300 font-medium flex-shrink-0">
-                    {comment.isDeleted ? '?' : comment.author.name.charAt(0)}
+                    {comment.isDeleted ? '?' : comment.author.userName.charAt(0)}
                   </div>
                   <div className="flex-1">
                     {comment.isDeleted ? (
                       // 삭제된 댓글 표시
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-gray-500 dark:text-gray-400 italic">
-                          {comment.content}
+                          {comment.text}
                         </span>
                       </div>
                     ) : (
                       <>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {comment.author.name}
+                            {comment.author.userName}
                           </span>
                           <span className="text-sm text-gray-500 dark:text-gray-400">
                             {formatDate(comment.createdAt)}
@@ -396,7 +398,7 @@ const CommunityDetailPage = () => {
                           </div>
                         ) : (
                           <>
-                            <p className="text-gray-700 dark:text-gray-300 mb-2">{comment.content}</p>
+                            <p className="text-gray-700 dark:text-gray-300 mb-2">{comment.text}</p>
                             {/* 댓글 작성자만 수정/삭제 가능 */}
                             {user && user.id === String(comment.author.id) && (
                               <div className="flex gap-2">

@@ -3,19 +3,19 @@ import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import CourseSection from '../components/main/CourseSection';
-import { CourseCategory, CourseFormat } from '../types';
+import { CourseCategoryType, CourseFormat } from '../types';
 import { fetchCourses } from '../services/courseService';
 
 interface CourseFilterForm {
   keyword: string;
-  category: CourseCategory | '전체';
+  category: CourseCategoryType | '전체';
   format: CourseFormat | '전체';
 }
 
-const categories: Array<CourseCategory | '전체'> = ['전체', '재직자', '취업예정자'];
+const categories: Array<CourseCategoryType | '전체'> = ['전체', '재직자', '취업예정자'];
 const formats: Array<CourseFormat | '전체'> = ['전체', '온라인', '오프라인', '혼합'];
 
-const targetMap: Record<string, CourseCategory | '전체'> = {
+const targetMap: Record<string, CourseCategoryType | '전체'> = {
   employee: '재직자',
   student: '취업예정자'
 };
@@ -26,7 +26,7 @@ const formatMap: Record<string, CourseFormat | '전체'> = {
   hybrid: '혼합'
 };
 
-const reverseTargetMap: Record<CourseCategory, string> = {
+const reverseTargetMap: Record<CourseCategoryType, string> = {
   재직자: 'employee',
   취업예정자: 'student'
 };

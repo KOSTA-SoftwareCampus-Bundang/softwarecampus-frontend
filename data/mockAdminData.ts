@@ -2,6 +2,8 @@
  * 관리자 페이지 목업 데이터
  */
 
+import type { AccountType } from '../types';
+
 export interface CourseApprovalRequest {
   id: number;
   courseTitle: string;
@@ -32,7 +34,7 @@ export interface AdminUser {
   id: number;
   username: string;
   email: string;
-  role: 'admin' | 'user' | 'academy';
+  accountType: AccountType;
   registeredDate: string;
   lastLogin: string;
   status: '활성' | '정지' | '탈퇴';
@@ -166,7 +168,7 @@ export const mockAdminUsers: AdminUser[] = [
     id: 1,
     username: '김철수',
     email: 'kim@example.com',
-    role: 'user',
+    accountType: 'USER',
     registeredDate: '2024-03-15',
     lastLogin: '2025-10-28',
     status: '활성',
@@ -177,7 +179,7 @@ export const mockAdminUsers: AdminUser[] = [
     id: 2,
     username: '이영희',
     email: 'lee@example.com',
-    role: 'user',
+    accountType: 'USER',
     registeredDate: '2024-05-20',
     lastLogin: '2025-10-27',
     status: '활성',
@@ -188,7 +190,7 @@ export const mockAdminUsers: AdminUser[] = [
     id: 3,
     username: '박지성',
     email: 'park@example.com',
-    role: 'academy',
+    accountType: 'ACADEMY',
     registeredDate: '2024-01-10',
     lastLogin: '2025-10-28',
     status: '활성',
@@ -199,7 +201,7 @@ export const mockAdminUsers: AdminUser[] = [
     id: 4,
     username: '정관리',
     email: 'admin@example.com',
-    role: 'admin',
+    accountType: 'ADMIN',
     registeredDate: '2023-12-01',
     lastLogin: '2025-10-29',
     status: '활성',
@@ -210,7 +212,7 @@ export const mockAdminUsers: AdminUser[] = [
     id: 5,
     username: '최정지',
     email: 'choi@example.com',
-    role: 'user',
+    accountType: 'USER',
     registeredDate: '2024-07-08',
     lastLogin: '2025-09-15',
     status: '정지',

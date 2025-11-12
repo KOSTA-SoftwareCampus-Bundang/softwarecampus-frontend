@@ -1,8 +1,8 @@
 import type {
-  UserProfile,
+  Account,
   MyPost,
   MyComment,
-  BookmarkedCourse,
+  CourseFavorite,
 } from '../types';
 
 import {
@@ -15,16 +15,15 @@ import {
 
 // ============================================================================
 // API 엔드포인트 정의 (백엔드 연동 시 사용)
-// 엔드포인트 명칭은 변동의 여지 있음 (백엔드 확정 시 백엔드 구현에 맞춰 수정 예정)
 // ============================================================================
-// GET    /api/users/{userId}/profile          - 사용자 프로필 조회
-// PUT    /api/users/{userId}/profile          - 사용자 프로필 수정
-// POST   /api/users/{userId}/profile/image    - 프로필 이미지 업로드
-// GET    /api/users/{userId}/posts            - 작성한 게시글 목록
-// GET    /api/users/{userId}/comments         - 작성한 댓글 목록
-// GET    /api/users/{userId}/bookmarks        - 찜한 과정 목록
-// POST   /api/courses/{courseId}/bookmark     - 과정 찜하기
-// DELETE /api/courses/{courseId}/bookmark     - 과정 찜 취소
+// GET    /api/accounts/me                     - 내 정보 조회
+// PUT    /api/accounts/me                     - 내 정보 수정
+// POST   /api/accounts/me/image               - 프로필 이미지 업로드
+// GET    /api/accounts/me/posts               - 내가 작성한 게시글 목록
+// GET    /api/accounts/me/comments            - 내가 작성한 댓글 목록
+// GET    /api/accounts/me/favorites           - 내가 찜한 과정 목록
+// POST   /api/courses/{courseId}/favorite     - 과정 찜하기
+// DELETE /api/courses/{courseId}/favorite     - 과정 찜 취소
 // ============================================================================
 
 /**
@@ -32,11 +31,9 @@ import {
  * @param userId 사용자 ID
  * @returns 사용자 프로필 정보
  */
-export const getUserProfile = async (userId?: number): Promise<UserProfile> => {
-  // TODO: 실제 API 호출로 대체 예정
-  // const response = await fetch(`/api/users/${userId}/profile`);
-  // if (!response.ok) throw new Error('Failed to fetch user profile');
-  // return await response.json();
+export const getUserProfile = async (userId?: number): Promise<Account> => {
+  // 실제 API: const response = await axios.get('/api/accounts/me');
+  // return response.data;
   
   await new Promise((resolve) => setTimeout(resolve, 300));
   
@@ -54,10 +51,8 @@ export const getMyPosts = async (
   page: number = 1,
   limit: number = 10
 ): Promise<{ posts: MyPost[]; total: number }> => {
-  // TODO: 실제 API 호출로 대체 예정
-  // const response = await fetch(`/api/users/${userId}/posts?page=${page}&limit=${limit}`);
-  // if (!response.ok) throw new Error('Failed to fetch posts');
-  // return await response.json();
+  // 실제 API: const response = await axios.get('/api/accounts/me/posts', { params: { page, limit } });
+  // return response.data;
   
   await new Promise((resolve) => setTimeout(resolve, 300));
   
@@ -81,10 +76,8 @@ export const getMyComments = async (
   page: number = 1,
   limit: number = 10
 ): Promise<{ comments: MyComment[]; total: number }> => {
-  // TODO: 실제 API 호출로 대체 예정
-  // const response = await fetch(`/api/users/${userId}/comments?page=${page}&limit=${limit}`);
-  // if (!response.ok) throw new Error('Failed to fetch comments');
-  // return await response.json();
+  // 실제 API: const response = await axios.get('/api/accounts/me/comments', { params: { page, limit } });
+  // return response.data;
   
   await new Promise((resolve) => setTimeout(resolve, 300));
   
@@ -102,11 +95,9 @@ export const getMyComments = async (
  * 사용자가 찜한 과정 목록을 가져옵니다.
  * @returns 찜한 과정 목록
  */
-export const getBookmarkedCourses = async (): Promise<BookmarkedCourse[]> => {
-  // TODO: 실제 API 호출로 대체 예정
-  // const response = await fetch(`/api/users/${userId}/bookmarks`);
-  // if (!response.ok) throw new Error('Failed to fetch bookmarked courses');
-  // return await response.json();
+export const getBookmarkedCourses = async (): Promise<CourseFavorite[]> => {
+  // 실제 API: const response = await axios.get('/api/accounts/me/favorites');
+  // return response.data;
   
   await new Promise((resolve) => setTimeout(resolve, 300));
   
@@ -121,21 +112,15 @@ export const getBookmarkedCourses = async (): Promise<BookmarkedCourse[]> => {
  */
 export const updateUserProfile = async (
   userId: number | undefined,
-  profileData: Partial<UserProfile>
-): Promise<UserProfile> => {
+  profileData: Partial<Account>
+): Promise<Account> => {
   // userId 검증
   if (userId === undefined) {
     throw new Error('User ID is required to update profile');
   }
 
-  // TODO: 실제 API 호출로 대체 예정
-  // const response = await fetch(`/api/users/${userId}/profile`, {
-  //   method: 'PUT',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(profileData),
-  // });
-  // if (!response.ok) throw new Error('Failed to update profile');
-  // return await response.json();
+  // 실제 API: const response = await axios.put('/api/accounts/me', profileData);
+  // return response.data;
   
   // 목업: 인위적인 딜레이 후 업데이트된 데이터 반환
   await new Promise((resolve) => setTimeout(resolve, 500));

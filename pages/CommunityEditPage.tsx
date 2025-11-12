@@ -2,7 +2,8 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchBoardPost, updateBoardPost } from '../services/communityService';
-import type { CommunityCategory } from '../types';
+import type { BoardCategory } from '../types';
+import { BOARD_CATEGORY_LABELS } from '../types';
 
 // Tiptap 에디터를 lazy load
 const TiptapEditor = lazy(() => import('../components/editor/TiptapEditor'));
@@ -12,32 +13,35 @@ const TiptapEditor = lazy(() => import('../components/editor/TiptapEditor'));
  */
 const CommunityEditPage = () => {
   const { postId } = useParams<{ postId: string }>();
+  const postIdNumber = postId ? parseInt(postId, 10) : NaN;
+  const isValidPostId = !isNaN(postIdNumber) && postIdNumber > 0;
+  
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [category, setCategory] = useState<CommunityCategory>('진로이야기');
+  const [text, setText] = useState('');
+  const [category, setCategory] = useState<BoardCategory>('CAREER');
 
   // 게시글 조회
   const { data: post, isLoading } = useQuery({
-    queryKey: ['boardPost', postId],
-    queryFn: () => fetchBoardPost(Number(postId)),
-    enabled: !!postId,
+    queryKey: ['boardPost', postIdNumber],
+    queryFn: () => fetchBoardPost(postIdNumber),
+    enabled: isValidPostId,
   });
 
   // 게시글 데이터로 초기화
   useEffect(() => {
     if (post) {
       setTitle(post.title);
-      setContent(post.content);
+      setText(post.text);
       setCategory(post.category);
     }
   }, [post]);
 
   // 게시글 수정 mutation
   const updatePostMutation = useMutation({
-    mutationFn: (data: { title: string; content: string; category: CommunityCategory }) =>
+    mutationFn: (data: { title: string; text: string; category: BoardCategory }) =>
       updateBoardPost(Number(postId), data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['boardPost', postId] });
@@ -73,17 +77,33 @@ const CommunityEditPage = () => {
       return;
     }
 
-    if (!content.trim() || content === '<p></p>') {
+    if (!text.trim() || text === '<p></p>') {
       alert('내용을 입력해주세요.');
       return;
     }
 
     updatePostMutation.mutate({
       title,
-      content,
+      text,
       category,
     });
   };
+
+  if (!isValidPostId) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 dark:text-red-400 mb-4">유효하지 않은 게시글 ID입니다.</p>
+          <button
+            onClick={() => navigate('/community')}
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            목록으로 돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -125,12 +145,12 @@ const CommunityEditPage = () => {
               </label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value as CommunityCategory)}
+                onChange={(e) => setCategory(e.target.value as BoardCategory)}
                 className="w-full md:w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
               >
-                <option value="진로이야기">진로이야기</option>
-                <option value="코딩이야기">코딩이야기</option>
-                <option value="공지사항">공지사항</option>
+                <option value="CAREER">{BOARD_CATEGORY_LABELS.CAREER}</option>
+                <option value="CODING">{BOARD_CATEGORY_LABELS.CODING}</option>
+                <option value="NOTICE">{BOARD_CATEGORY_LABELS.NOTICE}</option>
               </select>
             </div>
 
@@ -164,7 +184,7 @@ const CommunityEditPage = () => {
                   </div>
                 }
               >
-                <TiptapEditor content={content} onChange={setContent} />
+                <TiptapEditor content={text} onChange={setText} />
               </Suspense>
             </div>
           </div>

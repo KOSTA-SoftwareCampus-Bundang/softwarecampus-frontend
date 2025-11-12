@@ -425,7 +425,7 @@ const Header: React.FC = () => {
                   마이페이지
                 </NavLink>
               )}
-              {isAuthenticated && (user?.role === 'admin' || user?.role === 'academy') && (
+              {isAuthenticated && (user?.accountType === 'ADMIN' || user?.accountType === 'ACADEMY') && (
                 <NavLink to="/admin" className={({ isActive }) => topLinkClasses(isActive)}>
                   관리자
                 </NavLink>
@@ -588,7 +588,7 @@ const Header: React.FC = () => {
                 마이페이지
               </NavLink>
             )}
-            {isAuthenticated && (user?.role === 'admin' || user?.role === 'academy') && (
+            {isAuthenticated && (user?.accountType === 'ADMIN' || user?.accountType === 'ACADEMY') && (
               <NavLink
                 to="/admin"
                 onClick={handleCloseMobileMenu}

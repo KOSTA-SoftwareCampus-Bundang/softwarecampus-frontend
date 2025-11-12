@@ -4,6 +4,7 @@
 .tiptap-editor {
   outline: none;
   line-height: 1.6;
+  white-space: pre-wrap; /* ProseMirror 필수 속성 */
 }
 
 /* 키보드 포커스 시 접근성 있는 포커스 표시 */
