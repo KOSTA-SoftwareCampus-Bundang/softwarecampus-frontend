@@ -175,10 +175,8 @@ export const recommendBoardPost = async (postId: number, userId?: string): Promi
     throw new Error('이미 추천한 게시글입니다.');
   }
 
-  // 추천 처리
-  if (post.recommendCount !== undefined) {
-    post.recommendCount += 1;
-  }
+  // 추천 처리 (undefined/null을 0으로 처리)
+  post.recommendCount = (post.recommendCount ?? 0) + 1;
   localStorage.setItem(recommendKey, 'true');
 
   return {
