@@ -1032,6 +1032,40 @@ const AdminPage: React.FC = () => {
               {activeTab === 'users' && (
                 <div className="space-y-6">
                   <h2 className="text-3xl font-bold text-gray-900 dark:text-white">회원 관리</h2>
+                  
+                  {/* 검색 및 필터 */}
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 flex flex-wrap gap-4">
+                    <div className="flex-1 min-w-[250px]">
+                      <input
+                        type="text"
+                        placeholder="회원 이름 또는 이메일로 검색..."
+                        value={userSearchTerm}
+                        onChange={(e) => setUserSearchTerm(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <select
+                      value={userRoleFilter}
+                      onChange={(e) => setUserRoleFilter(e.target.value as '전체' | 'ADMIN' | 'USER' | 'ACADEMY')}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="전체">전체 권한</option>
+                      <option value="ADMIN">관리자</option>
+                      <option value="USER">일반</option>
+                      <option value="ACADEMY">기관</option>
+                    </select>
+                    <select
+                      value={userStatusFilter}
+                      onChange={(e) => setUserStatusFilter(e.target.value as '전체' | '활성' | '정지' | '탈퇴')}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="전체">전체 상태</option>
+                      <option value="활성">활성</option>
+                      <option value="정지">정지</option>
+                      <option value="탈퇴">탈퇴</option>
+                    </select>
+                  </div>
+
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-auto">
                     <table className="w-full">
                       <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">

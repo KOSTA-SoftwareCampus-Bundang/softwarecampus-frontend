@@ -33,7 +33,7 @@ const CommunityDetailPage = () => {
   const [editingContent, setEditingContent] = useState('');
 
   // 게시글 조회
-  const { data: post, isLoading: postLoading, error: postError } = useQuery({
+  const { data: post, isLoading: postLoading, error: postError, refetch: refetchPost } = useQuery({
     queryKey: ['boardPost', postIdNumber, user?.id],
     queryFn: () => fetchBoardPost(postIdNumber, user?.id),
     enabled: isValidPostId,
@@ -140,6 +140,51 @@ const CommunityDetailPage = () => {
           >
             목록으로 돌아가기
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 상태 처리
+  if (postError) {
+    const errorMessage = postError instanceof Error 
+      ? postError.message 
+      : '게시글을 불러오는 중 오류가 발생했습니다.';
+    
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="max-w-md w-full mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-red-200 dark:border-red-800">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-lg font-medium text-red-800 dark:text-red-200 mb-2">
+                  게시글 로드 실패
+                </h3>
+                <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                  {errorMessage}
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => refetchPost()}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
+                  >
+                    다시 시도
+                  </button>
+                  <Link
+                    to="/community"
+                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg transition-colors text-sm font-medium"
+                  >
+                    목록으로
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
