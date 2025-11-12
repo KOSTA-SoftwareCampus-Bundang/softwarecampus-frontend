@@ -13,6 +13,9 @@ import {
   mockBookmarkedCourses,
 } from '../data/mockMyPageData';
 
+// 모듈 레벨에서 저장된 프로필을 관리 (실제 API 연동 시에는 제거)
+let storedProfile: Account | null = null;
+
 // ============================================================================
 // API 엔드포인트 정의 (백엔드 연동 시 사용)
 // ============================================================================
@@ -37,8 +40,15 @@ export const getUserProfile = async (userId?: number): Promise<Account> => {
   
   await new Promise((resolve) => setTimeout(resolve, 300));
   
-  // 임시로 userId에 따라 다른 프로필 반환
-  return userId === 2 ? mockAcademyUserProfile : mockUserProfile;
+  // 저장된 프로필이 있으면 반환
+  if (storedProfile) {
+    return storedProfile;
+  }
+  
+  // 임시로 userId에 따라 다른 프로필 반환하고 저장
+  const profile = userId === 2 ? mockAcademyUserProfile : mockUserProfile;
+  storedProfile = { ...profile }; // 목업 데이터 복사하여 저장
+  return storedProfile;
 };
 
 /**
@@ -119,13 +129,19 @@ export const updateUserProfile = async (
   // 목업: 인위적인 딜레이 후 업데이트된 데이터 반환
   await new Promise((resolve) => setTimeout(resolve, 500));
   
-  // 목업: 기존 프로필 데이터를 기반으로 업데이트 (실제 API 동작 모방)
-  const baseProfile = mockUserProfile;
+  // 현재 저장된 프로필을 기반으로 업데이트 (없으면 mockUserProfile 사용)
+  const baseProfile = storedProfile || { ...mockUserProfile };
   
-  return {
+  // 업데이트된 프로필 생성 (목업 데이터 변경 방지)
+  const updatedProfile = {
     ...baseProfile,
     ...profileData,
   };
+  
+  // 업데이트된 프로필을 저장
+  storedProfile = updatedProfile;
+  
+  return updatedProfile;
 };
 
 /**
